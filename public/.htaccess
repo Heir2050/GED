@@ -1,0 +1,15 @@
+# Activation du moteur de réécriture
+RewriteEngine On
+
+# Accepter les vrais fichiers et répertoires
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Rediriger tout le reste vers index.php
+RewriteRule ^(.*)$ index.php?url=$1 [L,QSA]
+
+# Empêcher l'accès aux fichiers sensibles
+<FilesMatch "^(\.env|\.htaccess|config\.php|composer\.json|composer\.lock)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

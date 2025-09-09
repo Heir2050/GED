@@ -1,0 +1,8 @@
+# Interdire l'exécution de scripts dans uploads/
+<FilesMatch "\.(php|php5|php7|sh|pl|py|js)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Empêcher l'affichage de l'index du dossier
+Options -Indexes
