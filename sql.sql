@@ -37,7 +37,7 @@ CREATE TABLE Dossiers (
     id INT PRIMARY KEY AUTO_INCREMENT,
     nom VARCHAR(255) NOT NULL,
     chemin VARCHAR(500) NOT NULL,
-    service_id INT NOT NULL,
+    service_id INT NULL,
     date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
     createur_id INT NOT NULL,
     

@@ -119,7 +119,7 @@ trait Model
 		$this->query($query, $data);
 
 		// Get the last inserted ID
-		// return $this->getLastInsertId();
+		return $this->getLastInsertId();
 
 		return false;
 	}
@@ -166,7 +166,7 @@ trait Model
 
 	public function getLastInsertId()
 	{
-		return $this->connection->lastInsertId();
+		return $this->connect()->lastInsertId();
 	}
 
 	// QUERIES 

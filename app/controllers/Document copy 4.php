@@ -1,4 +1,5 @@
 <?php
+// correct but some error on displaying
 namespace Controller;
 
 defined('ROOTPATH') or exit('Access Denied!');

@@ -2,195 +2,76 @@
 
 <style>
     /* Styles existants conservés */
-    .submission-container {
-        width: 100%;
-        max-width: 600px;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        padding: 30px;
-    }
+    /* ... (votre CSS existant) ... */
     
-    .form-group {
-        margin-bottom: 20px;
-    }
-    
-    .file-upload-group {
-        position: relative;
-    }
-    
-    .file-upload-area {
-        border: 2px dashed #d1d5db;
-        border-radius: 12px;
-        padding: 40px 20px;
-        text-align: center;
-        transition: all 0.3s ease;
-        background: #f9fafb;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .file-upload-area.drag-over {
-        border-color: #3b82f6;
-        background-color: rgba(59, 130, 246, 0.05);
-    }
-    
-    .file-upload-area.has-files {
-        border-color: #10b981;
-        background-color: rgba(16, 185, 129, 0.05);
-    }
-    
-    #fileInput {
-        position: absolute;
-        width: 0.1px;
-        height: 0.1px;
-        opacity: 0;
-        overflow: hidden;
-        z-index: -1;
-    }
-    
-    .file-upload-label {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        cursor: pointer;
-        color: #4b5563;
-    }
-    
-    .file-icon-svg {
-        width: 60px;
-        height: 60px;
-        margin-bottom: 16px;
-        color: #9ca3af;
-        transition: color 0.3s ease;
-    }
-    
-    .file-upload-area:hover .file-icon-svg {
-        color: #3b82f6;
-    }
-    
-    .file-upload-label span {
-        display: block;
-    }
-    
-    #fileLabelText {
-        font-size: 18px;
-        font-weight: 500;
-        margin-bottom: 8px;
-    }
-    
-    .file-requirements {
-        font-size: 14px;
-        color: #6b7280;
-    }
-    
-    .file-preview {
-        margin-top: 20px;
+    .dossier-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
     }
     
-    .file-preview-item {
+    .dossier-card {
         background: white;
-        border-radius: 8px;
-        padding: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        position: relative;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        cursor: pointer;
+        border: 1px solid #e5e7eb;
     }
     
-    .file-preview-icon {
-        width: 40px;
-        height: 40px;
+    .dossier-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+    
+    .dossier-icon {
+        width: 50px;
+        height: 50px;
         color: #3b82f6;
+        margin-bottom: 15px;
+    }
+    
+    .dossier-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #374151;
         margin-bottom: 8px;
     }
     
-    .file-preview-name {
-        font-size: 12px;
-        font-weight: 500;
-        color: #374151;
-        word-break: break-word;
-        max-width: 100%;
-    }
-    
-    .file-preview-size {
-        font-size: 10px;
-        color: #6b7280;
-        margin-top: 4px;
-    }
-    
-    .remove-file {
-        position: absolute;
-        top: -8px;
-        right: -8px;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: #ef4444;
-        color: white;
+    .dossier-info {
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
-        font-size: 12px;
-        cursor: pointer;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-top: 15px;
     }
     
-    .upload-status {
-        margin-top: 16px;
-        text-align: center;
-        font-size: 14px;
-        font-weight: 500;
-    }
-    
-    .upload-status.success {
-        color: #10b981;
-    }
-    
-    .upload-status.error {
-        color: #ef4444;
-    }
-    
-    .submit-button {
-        display: block;
-        width: 100%;
-        padding: 12px 20px;
+    .document-count {
         background: #3b82f6;
         color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background 0.3s ease;
-        margin-top: 20px;
-    }
-    
-    .submit-button:hover {
-        background: #2563eb;
-    }
-    
-    .submit-button:disabled {
-        background: #9ca3af;
-        cursor: not-allowed;
-    }
-    
-    .files-count {
-        margin-top: 12px;
+        padding: 4px 12px;
+        border-radius: 20px;
         font-size: 14px;
-        color: #6b7280;
-        text-align: center;
+        font-weight: 500;
     }
     
-    .text-error-500 {
-        color: #ef4444;
-        font-size: 0.875rem;
-        margin-top: 0.5rem;
+    .dossier-date {
+        font-size: 12px;
+        color: #6b7280;
+    }
+    
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        color: #3b82f6;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .back-button:hover {
+        text-decoration: underline;
     }
 </style>
 
@@ -227,9 +108,19 @@
             </div>
         </div>
         
-        <div class="space-y-5 sm:space-y-6">
-            <div class="rounded-2xl bg-white">
-                <?php if (!empty($document)): ?>
+        <?php if (isset($dossier_courant)): ?>
+            <!-- Affichage des documents d'un dossier spécifique -->
+            <a href="<?= ROOT ?>/document" class="back-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="mr-2">
+                    <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5z"/>
+                </svg>
+                Retour aux dossiers
+            </a>
+            
+            <h3 class="text-lg font-semibold mb-4">Documents du dossier: <?= esc($dossier_courant->nom) ?></h3>
+            
+            <?php if (!empty($documents)): ?>
+                <div class="rounded-2xl bg-white p-6">
                     <table class="min-w-full">
                         <thead class="border-y border-gray-100 py-3 dark:border-gray-800">
                             <tr>
@@ -240,7 +131,12 @@
                                 </th>
                                 <th class="px-5 py-3 font-normal whitespace-nowrap sm:px-6">
                                     <div class="flex items-center">
-                                        <p class="text-theme-sm text-gray-500 dark:text-gray-400">Dossier</p>
+                                        <p class="text-theme-sm text-gray-500 dark:text-gray-400">Type</p>
+                                    </div>
+                                </th>
+                                <th class="px-5 py-3 font-normal whitespace-nowrap sm:px-6">
+                                    <div class="flex items-center">
+                                        <p class="text-theme-sm text-gray-500 dark:text-gray-400">Taille</p>
                                     </div>
                                 </th>
                                 <th class="px-5 py-3 font-normal whitespace-nowrap sm:px-6">
@@ -257,7 +153,7 @@
                         </thead>
 
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                            <?php foreach ($document as $item): ?>
+                            <?php foreach ($documents as $item): ?>
                                 <tr>
                                     <!-- Fichier -->
                                     <td class="py-3 px-5 whitespace-nowrap sm:px-5">
@@ -267,7 +163,7 @@
                                             </div>
                                             <div>
                                                 <?php if (!empty($item->nom_stockage)): ?>
-                                                    <a href="<?= ROOT . '/uploads/documents/' . $item->nom_stockage ?>" target="_blank" class="text-brand-600 hover:underline">
+                                                    <a href="<?= ROOT . '/' . $dossier_courant->chemin . $item->nom_stockage ?>" target="_blank" class="text-brand-600 hover:underline">
                                                         <?= esc($item->nom) ?>
                                                     </a>
                                                 <?php else: ?>
@@ -277,9 +173,18 @@
                                         </div>
                                     </td>
 
-                                    <!-- Dossier -->
+                                    <!-- Type -->
                                     <td class="px-5 py-3 whitespace-nowrap sm:px-6">
-                                        <span class="block text-sm"><?= esc($item->dossier_id) ?></span>
+                                        <span class="block text-sm">
+                                            <?= !empty($item->type) ? esc($item->type) : 'Inconnu' ?>
+                                        </span>
+                                    </td>
+
+                                    <!-- Taille -->
+                                    <td class="px-5 py-3 whitespace-nowrap sm:px-6">
+                                        <span class="block text-sm">
+                                            <?= !empty($item->taille) ? formatFileSize($item->taille) : 'N/A' ?>
+                                        </span>
                                     </td>
 
                                     <!-- Date d'upload -->
@@ -298,12 +203,18 @@
                                             
                                             <!-- Menu déroulant -->
                                             <div x-show="open" @click.outside="open = false" class="shadow-theme-lg dark:bg-gray-dark fixed w-40 space-y-1 rounded-2xl border border-gray-200 bg-white p-2 dark:border-gray-800" style="position: absolute; top: 20px; right: 0; z-index: 999;">
-                                                <a href="<?= ROOT ?>/document/<?= $item->id ?>" class="text-theme-xs flex w-full rounded-lg px-3 py-2 text-left font-medium text-gray-500 hover:bg-gray-100">
+                                                <a href="<?= ROOT . '/' . $dossier_courant->chemin . $item->nom_stockage ?>" target="_blank" class="text-theme-xs flex w-full rounded-lg px-3 py-2 text-left font-medium text-gray-500 hover:bg-gray-100">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"></path>
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                                     </svg>
-                                                    Détails
+                                                    Voir
+                                                </a>
+                                                <a href="<?= ROOT . '/' . $dossier_courant->chemin . $item->nom_stockage ?>" download class="text-theme-xs flex w-full rounded-lg px-3 py-2 text-left font-medium text-gray-500 hover:bg-gray-100">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+                                                    </svg>
+                                                    Télécharger
                                                 </a>
                                             </div>
                                         </div>
@@ -312,13 +223,44 @@
                             <?php endforeach; ?>
                         </tbody>
                     </table>
-                <?php else : ?>
+                </div>
+            <?php else : ?>
+                <div class="p-6 text-center text-gray-500 dark:text-gray-400">
+                    Aucun document dans ce dossier.
+                </div>
+            <?php endif; ?>
+            
+        <?php else: ?>
+            <!-- Affichage de la liste des dossiers -->
+            <div class="space-y-5 sm:space-y-6">
+                <?php if (!empty($dossiers)): ?>
+                    <div class="dossier-grid">
+                        <?php foreach ($dossiers as $dossier_item): ?>
+                            <div class="dossier-card" onclick="window.location='<?= ROOT ?>/document?dossier_id=<?= $dossier_item->id ?>'">
+                                <div class="dossier-icon">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/>
+                                    </svg>
+                                </div>
+                                <div class="dossier-name"><?= esc($dossier_item->nom) ?></div>
+                                <div class="dossier-info">
+                                    <div class="document-count">
+                                        <?= $dossier_item->nb_documents ?> fichier(s)
+                                    </div>
+                                    <div class="dossier-date">
+                                        <?= date('d/m/Y', strtotime($dossier_item->date_creation)) ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
                     <div class="p-6 text-center text-gray-500 dark:text-gray-400">
-                        Pas de document disponible.
+                        Aucun dossier disponible. Créez votre premier dossier en uploadant un document.
                     </div>
                 <?php endif; ?>
             </div>
-        </div>
+        <?php endif; ?>
     </div>
 </main>
 
@@ -379,147 +321,15 @@
     </div>
 </div>
 
-<!-- validation du formulaire -->
+<!-- Fonctions utilitaires -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.querySelector('form[action*="/document"]');
-        if(form) {
-            form.addEventListener('submit', function(e) {
-                const dossierName = form.querySelector('[name="dossier_name"]');
-                const fileInput = form.querySelector('[name="files[]"]');
-                let valid = true;
-
-                // Réinitialise les erreurs affichées
-                form.querySelectorAll('.text-error-500').forEach(el => el.textContent = '');
-
-                // Validation : champs non vides
-                if(!dossierName.value.trim()) {
-                    valid = false;
-                    showError(dossierName, "Le nom du dossier est requis.");
-                }
-                
-                if(fileInput.files.length === 0) {
-                    valid = false;
-                    showError(fileInput, "Veuillez sélectionner un fichier.");
-                }
-
-                if(!valid) {
-                    e.preventDefault(); // Empêche l'envoi du formulaire
-                    
-                    // Afficher un message d'erreur général
-                    const uploadStatus = document.getElementById('uploadStatus');
-                    if (uploadStatus) {
-                        uploadStatus.textContent = "Veuillez corriger les erreurs ci-dessus";
-                        uploadStatus.className = 'upload-status error';
-                    }
-                }
-            });
-
-            function showError(input, message) {
-                let errorElement = input.parentElement.querySelector('.text-error-500');
-                if(!errorElement) {
-                    errorElement = document.createElement('p');
-                    errorElement.className = 'text-theme-xs text-error-500 mt-1.5';
-                    input.parentElement.appendChild(errorElement);
-                }
-                errorElement.textContent = message;
-                
-                // Ajouter une bordure rouge sur le champ invalide
-                input.style.borderColor = '#ef4444';
-            }
-        }
-
-        // Gestion du drag and drop pour les fichiers
-        const fileUploadArea = document.getElementById('fileUploadArea');
-        const fileInput = document.getElementById('fileInput');
-        const fileLabelText = document.getElementById('fileLabelText');
-        const filesCount = document.getElementById('filesCount');
-        const filePreview = document.getElementById('filePreview');
-
-        if (fileUploadArea && fileInput) {
-            // ... existing drag and drop code ...
-
-            function handleFiles(files) {
-                if (files.length > 0) {
-                    fileUploadArea.classList.add('has-files');
-                    fileLabelText.textContent = `${files.length} fichier(s) sélectionné(s)`;
-                    filesCount.textContent = `${files.length} fichier(s)`;
-                    
-                    // Réinitialiser les erreurs
-                    const errorElement = fileInput.parentElement.querySelector('.text-error-500');
-                    if (errorElement) {
-                        errorElement.textContent = '';
-                    }
-                    fileInput.style.borderColor = '';
-                    
-                    // Afficher la prévisualisation
-                    filePreview.innerHTML = '';
-                    
-                    for (let i = 0; i < files.length; i++) {
-                        const file = files[i];
-                        
-                        // Vérifier la taille du fichier (max 10MB)
-                        if (file.size > 10 * 1024 * 1024) {
-                            showError(fileInput, "Le fichier '" + file.name + "' dépasse la taille maximale de 10MB");
-                            continue; // Passer au fichier suivant au lieu de tout annuler
-                        }
-                        
-                        const reader = new FileReader();
-                        
-                        reader.onload = function(e) {
-                            const previewItem = document.createElement('div');
-                            previewItem.className = 'file-preview-item';
-                            
-                            let icon = '<svg class="file-preview-icon" viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>';
-                            
-                            if (file.type.includes('image')) {
-                                icon = `<img src="${e.target.result}" class="file-preview-icon" style="object-fit: cover; border-radius: 4px; width: 40px; height: 40px;">`;
-                            }
-                            
-                            previewItem.innerHTML = `
-                                ${icon}
-                                <div class="file-preview-name">${file.name}</div>
-                                <div class="file-preview-size">${formatFileSize(file.size)}</div>
-                                <div class="remove-file" onclick="removeFile(this, ${i})">×</div>
-                            `;
-                            
-                            filePreview.appendChild(previewItem);
-                        };
-                        
-                        reader.readAsDataURL(file);
-                    }
-                } else {
-                    fileUploadArea.classList.remove('has-files');
-                    fileLabelText.textContent = 'Glissez-déposez vos fichiers ou cliquez pour sélectionner';
-                    filesCount.textContent = 'Aucun fichier sélectionné';
-                    filePreview.innerHTML = '';
-                }
-            }
-
-            // ... rest of existing JavaScript ...
-        }
-    });
-
-    // Fonction globale pour supprimer les fichiers
-    window.removeFile = function(element, fileIndex) {
-        element.parentElement.remove();
-        
-        // Créer un nouveau DataTransfer pour mettre à jour les fichiers
-        const dataTransfer = new DataTransfer();
-        const fileInput = document.getElementById('fileInput');
-        
-        // Recréer la liste des fichiers sans celui supprimé
-        for (let i = 0; i < fileInput.files.length; i++) {
-            if (i !== fileIndex) {
-                dataTransfer.items.add(fileInput.files[i]);
-            }
-        }
-        
-        fileInput.files = dataTransfer.files;
-        
-        // Mettre à jour l'affichage
-        handleFiles(fileInput.files);
-    };
+    function formatFileSize(bytes) {
+        if (bytes === 0 || bytes === undefined) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
 </script>
 
 <?php $this->view("footer"); ?>
