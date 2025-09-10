@@ -77,7 +77,7 @@
                         </a>
                     </li>
 
-                    <?php if ($ses->is_logged_in() && $ses->user('role') == 'admin') : ?>
+                    <?php if ($ses->is_logged_in() && $ses->user('role') == 'ADMIN') : ?>
                         <li>
                             <a href="<?= ROOT ?>/users" @click="selected = (selected === 'Calendar' ? '':'Calendar')" class="menu-item group" :class=" (selected === 'Calendar') && (page === 'calendar') ? 'menu-item-active' : 'menu-item-inactive'">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">

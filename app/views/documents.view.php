@@ -2,6 +2,197 @@
 
 <style>
     /* Styles existants conservés */
+    .submission-container {
+        width: 100%;
+        max-width: 600px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .file-upload-group {
+        position: relative;
+    }
+    
+    .file-upload-area {
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 40px 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        background: #f9fafb;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .file-upload-area.drag-over {
+        border-color: #3b82f6;
+        background-color: rgba(59, 130, 246, 0.05);
+    }
+    
+    .file-upload-area.has-files {
+        border-color: #10b981;
+        background-color: rgba(16, 185, 129, 0.05);
+    }
+    
+    #fileInput {
+        position: absolute;
+        width: 0.1px;
+        height: 0.1px;
+        opacity: 0;
+        overflow: hidden;
+        z-index: -1;
+    }
+    
+    .file-upload-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        color: #4b5563;
+    }
+    
+    .file-icon-svg {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 16px;
+        color: #9ca3af;
+        transition: color 0.3s ease;
+    }
+    
+    .file-upload-area:hover .file-icon-svg {
+        color: #3b82f6;
+    }
+    
+    .file-upload-label span {
+        display: block;
+    }
+    
+    #fileLabelText {
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+    
+    .file-requirements {
+        font-size: 14px;
+        color: #6b7280;
+    }
+    
+    .file-preview {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+    }
+    
+    .file-preview-item {
+        background: white;
+        border-radius: 8px;
+        padding: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        margin-bottom: 1rem;
+    }
+    
+    .file-preview-icon {
+        width: 40px;
+        height: 40px;
+        color: #3b82f6;
+        margin-bottom: 8px;
+    }
+    
+    .file-preview-name {
+        font-size: 12px;
+        font-weight: 500;
+        color: #374151;
+        word-break: break-word;
+        max-width: 100%;
+    }
+    
+    .file-preview-size {
+        font-size: 10px;
+        color: #6b7280;
+        margin-top: 4px;
+    }
+    
+    .remove-file {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #ef4444;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 12px;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .upload-status {
+        margin-top: 16px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .upload-status.success {
+        color: #10b981;
+    }
+    
+    .upload-status.error {
+        color: #ef4444;
+    }
+    
+    .submit-button {
+        display: block;
+        width: 100%;
+        padding: 12px 20px;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        margin-top: 20px;
+    }
+    
+    .submit-button:hover {
+        background: #2563eb;
+    }
+    
+    .submit-button:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+    
+    .files-count {
+        margin-top: 12px;
+        font-size: 14px;
+        color: #6b7280;
+        text-align: center;
+    }
+    
+    .text-error-500 {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
     /* ... (votre CSS existant) ... */
     
     .dossier-grid {

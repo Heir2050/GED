@@ -168,6 +168,10 @@ INSERT INTO TypesAction (code, description) VALUES
 ('LOGOUT', 'Déconnexion du système'),
 ('NOTIFICATION_SENT', 'Envoi d''une notification');
 
+ALTER TABLE documents 
+ADD COLUMN taille BIGINT NOT NULL DEFAULT 0 AFTER nom_stockage,
+ADD COLUMN type VARCHAR(100) NOT NULL DEFAULT 'application/octet-stream' AFTER taille;
+
 
 
 

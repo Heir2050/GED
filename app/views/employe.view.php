@@ -355,7 +355,7 @@
                                                                 "d MMMM yyyy 'à' HH:mm"         // pattern personnalisé
                                                             );
 
-                                                            $date = new DateTime($row->created_at);
+                                                            $date = new DateTime($row->date_creation);
                                                             echo $formatter->format($date);
                                                         ?>
                                                     </p>
