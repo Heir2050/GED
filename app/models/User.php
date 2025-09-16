@@ -16,14 +16,16 @@ class User
 
 	protected $allowedColumns = [
 
-		'image',
+		'photo',
 		'nom',
 		'prenom',
-		'username',
 		'email',
+		'uploader_id',
 		'password',
 		'role',
-		'created_at',
+		'est_actif',
+		'service_id',
+		'date_creation',
 	];
 
 	public function validate($files_data, $data, $id = null)
@@ -87,3 +89,12 @@ class User
 		$this->query($query);
 	}
 }
+
+
+
+// ALTER TABLE Notifications
+// DROP COLUMN recipient_user_id,
+// DROP COLUMN actor_user_id,
+// DROP COLUMN action,
+// DROP COLUMN is_read,
+// DROP COLUMN created_at;

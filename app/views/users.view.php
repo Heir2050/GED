@@ -49,6 +49,26 @@
                                 <?php endif; ?>
                             </div>
                             <div class="w-full md:w-1/2 px-2.5">
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Service</label>
+                                <div x-data="{ isOptionSelected: false }" class="relative z-20 bg-transparent">
+                                    <select name="service_id" class="dark:bg-dark-900 z-20 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" :class="isOptionSelected && 'text-gray-500 dark:text-gray-400'" @change="isOptionSelected = true">
+                                        
+                                        <option value="" <?= old_select('service_id', '-') ?>>-</option>
+                                        <option value="1" <?= old_select('service_id', 'Developpement') ?>>Developpement</option>
+                                        <option value="2" <?= old_select('service_id', 'Reseau') ?>>Reseau</option>
+                                    </select>
+                                    <span class="absolute z-30 text-gray-500 -translate-y-1/2 right-4 top-1/2 dark:text-gray-400">
+                                        <svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                            <path d="M4.79175 7.396L10.0001 12.6043L15.2084 7.396" stroke-width="1.5" stroke-linecap="round"
+                                                stroke-linejoin="round"></path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <?php if (!empty($errors['role'])) : ?>
+                                    <p class="text-theme-xs text-error-500 mt-1.5"><?= $errors['role'] ?></p>
+                                <?php endif; ?>
+                            </div>
+                            <div class="w-full md:w-1/2 px-2.5">
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Rôle</label>
                                 <div x-data="{ isOptionSelected: false }" class="relative z-20 bg-transparent">
                                     <select name="role"
@@ -336,7 +356,7 @@
                                                                 "d MMMM yyyy 'à' HH:mm"         // pattern personnalisé
                                                             );
 
-                                                            $date = new DateTime($row->created_at);
+                                                            $date = new DateTime($row->date_creation);
                                                             echo $formatter->format($date);
                                                         ?>
                                                     </p>

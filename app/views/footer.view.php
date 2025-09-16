@@ -275,6 +275,53 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 </script>
 
+<!-- // Actualiser le compteur de notifications toutes les 30 secondes -->
+<script>
+    setInterval(() => {
+        if (document.hidden) return; // Ne pas actualiser si la page n'est pas visible
+        
+        fetch('<?= ROOT ?>/notifications/count')
+            .then(response => response.text())
+            .then(count => {
+                const badge = document.querySelector('.relative .bg-red-500');
+                const currentCount = badge ? parseInt(badge.textContent) : 0;
+                const newCount = parseInt(count);
+                
+                if (newCount > currentCount) {
+                    // Nouvelles notifications disponibles
+                    if (badge) {
+                        badge.textContent = newCount;
+                        badge.style.display = 'flex';
+                    }
+                    
+                    // Animation de notification
+                    const bell = document.querySelector('[x-data] button');
+                    if (bell) {
+                        bell.classList.add('animate-bell');
+                        setTimeout(() => {
+                            bell.classList.remove('animate-bell');
+                        }, 1000);
+                    }
+                }
+            });
+    }, 30000); // 30 secondes
+
+    // Ajouter l'animation CSS pour la cloche
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes bell {
+            0%, 100% { transform: rotate(0); }
+            25% { transform: rotate(15deg); }
+            50% { transform: rotate(-15deg); }
+            75% { transform: rotate(15deg); }
+        }
+        .animate-bell {
+            animation: bell 0.5s ease-in-out;
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+
 
 </body>
 

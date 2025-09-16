@@ -161,9 +161,11 @@ class Users
         }
 
 
-        $data['total_users'] = $users->get_row("select count(*) as total from users");
+        $data['total_users'] = $users->get_row("select count(*) as total from employes");
 
         $data['rows'] = $users->findAll();
+
+        // $data['services'] = $users->findAll();
 
         $this->view('users', $data);
     }

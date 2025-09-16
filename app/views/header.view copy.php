@@ -3,11 +3,11 @@
 
     $ses = new \Core\Session();
 
-    use Model\Notification;
-    $notif = new Notification();
-    $userId = $_SESSION['USER']->id ?? 0;
-    $notifCount = $notif->getUnreadCount($userId);
-    $notifications = $notif->getUserNotifications($userId); // Ajoute cette ligne
+    // use Model\Notification;
+    // $notif = new Notification();
+    // $userId = $_SESSION['USER']->id ?? 0;
+    // $notifCount = $notif->getUnreadCount($userId);
+    // $notifications = $notif->getUserNotifications($userId); // Ajoute cette ligne
 ?>
 
 <header x-data="{menuToggle: false}" class="sticky top-0 z-99999 flex w-full border-gray-200 bg-white lg:border-b dark:border-gray-800 dark:bg-gray-900">
@@ -72,7 +72,7 @@
             </button>
             <!-- Application nav menu button -->
 
-            <!-- <div class="hidden lg:block">
+            <div class="hidden lg:block">
                 <form>
                     <div class="relative">
                         <span class="absolute top-1/2 left-4 -translate-y-1/2">
@@ -99,7 +99,7 @@
                     </div>
                 </form>
             </div>
-        </div> -->
+        </div>
 
         <div :class="menuToggle ? 'flex' : 'hidden'" class="shadow-theme-md w-full items-center justify-between gap-4 px-5 py-4 lg:flex lg:justify-end lg:px-0 lg:shadow-none">
             <div class="2xsm:gap-3 flex items-center gap-2">
@@ -137,7 +137,7 @@
                 <!-- Notification Menu Area -->
                 <div class="relative" x-data="{ dropdownOpen: false, notifying: true }" @click.outside="dropdownOpen = false">
                     <button class="hover:text-dark-900 relative flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white" @click.prevent="dropdownOpen = ! dropdownOpen; notifying = false">
-                        <?php if ($notifCount > 0): ?>
+                        <?php if (isset($notifCount) > 0): ?>
                             <span :class="!notifying ? 'hidden' : 'flex'" class="absolute top-0.5 right-0 z-1 rounded-full bg-brand-500" style="height: 1.2rem;width: 1.2rem; display: flex; align-items: center; justify-content: center; color: white; font-size: .8rem;right: -5px;">
                                 <?= $notifCount ?>
                             </span>
@@ -177,7 +177,7 @@
 
                             <ul id="notif-list" class="custom-scrollbar flex h-auto flex-col overflow-y-auto">
                                 <?php foreach (array_merge($unread, $read) as $notif): ?>
-                                    <li data-id="<?= $notif->id ?>" data-document-id="<?= $notif->document_id ?>" class="notif-item rounded-lg <?= (empty($notif->is_read) || $notif->is_read == 0) ? ' font-bold bg-blue-light-50' : '' ?>" style="margin:.2rem 0;">
+                                    <li data-id="<?= $notif->id ?>" data-document-id="<?= $notif->document_id ?>" data-conge-id="<?= $notif->conge_id ?>" class="notif-item rounded-lg <?= (empty($notif->is_read) || $notif->is_read == 0) ? ' font-bold bg-blue-light-50' : '' ?>" style="margin:.2rem 0;">
                                         <a href="#" class="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5">
                                             <span class="block">
                                                 <span class="text-theme-sm mb-1.5 block text-gray-500 dark:text-gray-400">
@@ -289,30 +289,31 @@
         item.addEventListener('click', function(e) {
             e.preventDefault();
 
-            // Récupérer les données de la notification
             const notifId = this.dataset.id;
-            const documentId = this.dataset.documentId; // Nouveau: ID du document
+            const documentId = this.dataset.documentId;
+            const congeId = this.dataset.congeId; // Nouveau
             const message = this.querySelector('.text-theme-sm').innerText;
             const date = this.querySelector('.text-theme-xs span').innerText;
 
             // Marquer comme lu
-            fetch('notifications/mark_read/' + notifId)
-                .then(() => {
-                    this.classList.add('bg-gray-200');
-                    // Optionnel: rafraîchir le badge
-                });
+            fetch('<?= ROOT ?>/notifications/mark_read/' + notifId);
 
             // Afficher la modale
-            document.getElementById('notif-modal-title').innerText = "Détail de la notification";
+            document.getElementById('notif-modal-title').innerText = "Détails de la notification";
             document.getElementById('notif-modal-content').innerHTML = `
                 <p style="margin-bottom:1rem;"><strong>Message :</strong> ${message}</p>
                 <p><strong>Date :</strong> ${date}</p>
             `;
             
-            // Mettre à jour le lien "Plus de détails"
+            // Gérer le lien "Plus de détails"
             const detailsLink = document.getElementById('notif-details-link');
             if (documentId) {
+                // Notification pour document
                 detailsLink.href = '<?= ROOT ?>/details/' + documentId;
+                detailsLink.style.display = 'inline-block';
+            } else if (congeId) {
+                // Notification pour congé
+                detailsLink.href = '<?= ROOT ?>/detailconges/' + congeId;
                 detailsLink.style.display = 'inline-block';
             } else {
                 detailsLink.style.display = 'none';
@@ -321,14 +322,4 @@
             document.getElementById('notif-modal').style.display = 'flex';
         });
     });
-
-    // Fermer la modale
-    document.getElementById('notif-modal-close').onclick = function() {
-        document.getElementById('notif-modal').style.display = 'none';
-    };
-
-    // Fermer en cliquant en dehors
-    document.getElementById('notif-modal').onclick = function(e) {
-        if(e.target === this) this.style.display = 'none';
-    };
 </script>

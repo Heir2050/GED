@@ -101,6 +101,9 @@ CREATE TABLE Notifications (
     INDEX idx_service_date (service_id, date_notification),
     INDEX idx_document (document_id)
 );
+ALTER TABLE notifications 
+ADD COLUMN employes_ayant_ouvert JSON NULL DEFAULT NULL AFTER message;
+
 
 -- Table pour savoir qui a consulté le document suite à une notification
 CREATE TABLE NotificationsConsultees (
@@ -171,6 +174,82 @@ INSERT INTO TypesAction (code, description) VALUES
 ALTER TABLE documents 
 ADD COLUMN taille BIGINT NOT NULL DEFAULT 0 AFTER nom_stockage,
 ADD COLUMN type VARCHAR(100) NOT NULL DEFAULT 'application/octet-stream' AFTER taille;
+
+
+
+
+
+
+-- Créer un nouveau trigger qui vérifie si le dossier a déjà été notifié
+DELIMITER //
+
+CREATE TRIGGER after_document_insert
+AFTER INSERT ON Documents
+FOR EACH ROW
+BEGIN
+    DECLARE dossier_service_id INT;
+    DECLARE uploader_employe_id INT;
+    DECLARE dossier_nom VARCHAR(255);
+    DECLARE notification_exists INT;
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE employe_id INT;
+    DECLARE employe_cursor CURSOR FOR 
+        SELECT id FROM Employes 
+        WHERE service_id = dossier_service_id 
+        AND est_actif = TRUE 
+        AND id != uploader_employe_id;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    
+    -- Récupérer les informations du dossier
+    SELECT service_id, createur_id, nom INTO dossier_service_id, uploader_employe_id, dossier_nom
+    FROM Dossiers WHERE id = NEW.dossier_id;
+    
+    -- Vérifier si une notification existe déjà pour ce dossier aujourd'hui
+    SELECT COUNT(*) INTO notification_exists
+    FROM Notifications 
+    WHERE dossier_id = NEW.dossier_id 
+    AND DATE(date_notification) = CURDATE()
+    AND uploader_id = uploader_employe_id;
+    
+    -- Si aucune notification n'existe pour ce dossier aujourd'hui, en créer une
+    IF notification_exists = 0 THEN
+        -- Parcourir tous les employés du même service (sauf l'uploader)
+        OPEN employe_cursor;
+        employe_loop: LOOP
+            FETCH employe_cursor INTO employe_id;
+            IF done THEN
+                LEAVE employe_loop;
+            END IF;
+            
+            -- Créer une notification pour chaque employé
+            INSERT INTO Notifications (dossier_id, service_id, uploader_id, recipient_id, message)
+            VALUES (
+                NEW.dossier_id, 
+                dossier_service_id, 
+                uploader_employe_id, 
+                employe_id,
+                CONCAT('Nouveaux documents ajoutés dans le dossier "', dossier_nom, '"')
+            );
+        END LOOP;
+        CLOSE employe_cursor;
+    END IF;
+END//
+
+DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

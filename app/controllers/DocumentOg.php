@@ -65,7 +65,6 @@ class Document
                 if ($existingDossier) {
                     $dossierId = $existingDossier->id;
                     $dossierPath = "uploads/documents/" . $dossierName . "/";
-                    $serviceId = $existingDossier->service_id;
                 } else {
                     // Créer un nouveau dossier
                     $user_id = $ses->user('id');
@@ -90,7 +89,6 @@ class Document
                     $dossierData = [
                         'nom' => $dossierName,
                         'chemin' => 'uploads/documents/' . $dossierName . '/',
-                        'service_id' => $employe->service_id,
                         'createur_id' => $employe->id,
                         'date_creation' => date('Y-m-d H:i:s')
                     ];
@@ -101,7 +99,6 @@ class Document
                     $newDossier = $dossier->first(['nom' => $dossierName]);
                     $dossierId = $newDossier->id;
                     $dossierPath = $newDossier->chemin;
-                    $serviceId = $newDossier->service_id;
                     
                     // Créer le dossier physique sur le serveur
                     if (!file_exists($dossierPath)) {
@@ -112,7 +109,6 @@ class Document
                 // TRAITEMENT DE TOUS LES FICHIERS
                 $uploadSuccess = true;
                 $uploadedFiles = 0;
-                $uploadedDocumentIds = [];
                 
                 foreach ($file['files']['name'] as $index => $fileName) {
                     if ($file['files']['error'][$index] === UPLOAD_ERR_OK) {
@@ -124,12 +120,6 @@ class Document
                         $filePath = $dossierPath . $storageName;
                         
                         if (move_uploaded_file($file['files']['tmp_name'][$index], $filePath)) {
-                            // Déterminer le type MIME du fichier
-                            $fileType = $file['files']['type'][$index];
-                            if (empty($fileType)) {
-                                $fileType = mime_content_type($filePath);
-                            }
-                            
                             // Enregistrer en base de données
                             $documentData = [
                                 'nom' => $originalName,
@@ -139,32 +129,11 @@ class Document
                                 'date_upload' => date('Y-m-d H:i:s'),
                                 'date_modification' => date('Y-m-d H:i:s'),
                                 'taille' => $file['files']['size'][$index],
-                                'type' => $fileType
+                                'type' => $file['files']['type'][$index]
                             ];
 
                             $document->insert($documentData);
                             $uploadedFiles++;
-                            
-                            // Récupérer l'ID du document créé
-                            $newDocument = $document->first(['nom_stockage' => $storageName]);
-                            $uploadedDocumentIds[] = $newDocument->id;
-
-                            // 🔔 NOTIFICATION AUTOMATIQUE : Notifier les employés du service
-                            /*
-                            $notificationModel = new Notification();
-                            $notificationsSent = $notificationModel->notifyServiceEmployees(
-                                $newDocument->id,
-                                $serviceId,
-                                $ses->user('id'),
-                                $originalName,
-                                $dossierName
-                            );
-                            */
-                            // Trouver l'employé correspondant à l'utilisateur
-
-
-
-
                         } else {
                             $uploadSuccess = false;
                             $document->errors['file'] = "Erreur lors du téléversement du fichier: " . $originalName;
@@ -173,15 +142,8 @@ class Document
                 }
                 
                 if ($uploadSuccess && $uploadedFiles > 0) {
-                    $message = "$uploadedFiles document(s) téléversé(s) avec succès dans le dossier '$dossierName'";
-                    
-                    // Ajouter l'information sur les notifications envoyées
-                    if (isset($notificationsSent)) {
-                        $message .= " - $notificationsSent notification(s) envoyée(s)";
-                    }
-                    
-                    message($message);
-                    redirect('document');
+                    message("$uploadedFiles document(s) téléversé(s) avec succès dans le dossier '" . $dossierName . "'");
+                    redirect('documents');
                 } else {
                     if ($uploadedFiles > 0) {
                         message("$uploadedFiles document(s) téléversé(s), mais certaines erreurs sont survenues");
@@ -212,42 +174,9 @@ class Document
             $data['documents'] = $document->where(['dossier_id' => $id]);
         } else {
             // Rediriger vers la page principale si aucun ID n'est spécifié
-            redirect('document');
+            redirect('documents');
         }
 
         $this->view('documents', $data);
-    }
-
-    public function dossier_stats($dossier_id = null)
-    {
-        $ses = new Session();
-        $req = new Request();
-        $dossierModel = new Dossiers();
-        $notificationModel = new Notification();
-
-        $data = [];
-
-        if ($dossier_id) {
-            $data['dossier'] = $dossierModel->first(['id' => $dossier_id]);
-            $data['notifications'] = $notificationModel->getDossierNotifications($dossier_id);
-            $data['viewers'] = $notificationModel->getDossierViewers($dossier_id);
-            
-            // Récupérer les employés du service qui n'ont pas consulté
-            $employeModel = new Employes();
-            $data['non_viewers'] = $employeModel->query("
-                SELECT e.* 
-                FROM Employes e 
-                WHERE e.service_id = :service_id 
-                AND e.est_actif = 1 
-                AND e.id NOT IN (
-                    SELECT n.recipient_id 
-                    FROM Notifications n 
-                    WHERE n.dossier_id = :dossier_id 
-                    AND n.is_read = TRUE
-                )
-            ", ['service_id' => $data['dossier']->service_id, 'dossier_id' => $dossier_id]);
-        }
-
-        $this->view('dossier_stats', $data);
     }
 }

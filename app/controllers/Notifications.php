@@ -1,18 +1,17 @@
 <?php
-
 namespace Controller;
 
 defined('ROOTPATH') or exit('Access Denied!');
 
-use \Core\Session; //Importing namespace
+use \Core\Session;
 use \Core\Request;
 use Model\User;
-use \Model\Image;
 use \Model\Notification;
+use Model\Employes;
 
 class Notifications 
 {
-    use MainController; // this importing another class
+    use MainController;
 
     public function index()
     {
@@ -20,21 +19,27 @@ class Notifications
         $req = new Request();
         $ses = new Session();
 
-        # After doing anything, we unsure that the user is loged in.
         if (!$ses->is_logged_in()) {
-            message('Please login as admin');
+            message('Please login');
             redirect('login');
         }
 
-
-        $ses = new Session();
         $notif = new Notification();
-
-        $user_id = $ses->user('id');
-        $data['notifications'] = $notif->getUserNotifications($user_id);
-
-
-
+        $employeModel = new Employes();
+        
+        // Trouver l'employé correspondant à l'utilisateur
+        $user = $users->first(['id' => $ses->user('id')]);
+        $employe = $employeModel->first(['email' => $user->email]);
+        
+        if (!$employe) {
+            message('Profil employé non trouvé');
+            redirect('documents');
+        }
+        
+        // Marquer toutes les notifications comme lues
+        $notif->markAllAsRead($employe->id);
+        
+        $data['notifications'] = $notif->getUserNotifications($employe->id);
         $data['rows'] = $users->findAll();
         $data['action'] = "";
 
@@ -43,45 +48,63 @@ class Notifications
 
     public function count()
     {
+        $users = new User();
         $ses = new Session();
         $notif = new Notification();
+        $employeModel = new Employes();
 
-        $user_id = $ses->user('id');
-        echo $notif->getUnreadCount($user_id);
+        if ($ses->is_logged_in()) {
+            $user = $users->first(['id' => $ses->user('id')]);
+            $employe = $employeModel->first(['email' => $user->email]);
+            
+            if ($employe) {
+                echo $notif->getUnreadCount($employe->id);
+                return;
+            }
+        }
+        
+        echo "0";
     }
 
     public function mark_read($id)
     {
+        $users = new User();
         $ses = new Session();
         $notif = new Notification();
+        $employeModel = new Employes();
 
-        $user_id = $ses->user('id');
-        $notif->markAsRead($id, $user_id);
-        echo "ok";
+        if ($ses->is_logged_in()) {
+            $user = $users->first(['id' => $ses->user('id')]);
+            $employe = $employeModel->first(['email' => $user->email]);
+            
+            if ($employe) {
+                $notif->markAsRead($id, $employe->id);
+                echo "ok";
+                return;
+            }
+        }
+        
+        echo "error";
     }
 
-    // public function createAssignmentNotification($document_id, $assigned_by, $assigned_to)
-    // {
+    public function mark_all_read()
+    {
+        $users = new User();
+        $ses = new Session();
+        $notif = new Notification();
+        $employeModel = new Employes();
 
-    //     $notif = new Notification();
-    //     $userModel = new \Model\User();
-    //     $assigner = $userModel->first(['id' => $assigned_by]);
+        if ($ses->is_logged_in()) {
+            $user = $users->first(['id' => $ses->user('id')]);
+            $employe = $employeModel->first(['email' => $user->email]);
+            
+            if ($employe) {
+                $notif->markAllAsRead($employe->id);
+                echo "ok";
+                return;
+            }
+        }
         
-    //     $message = "Un document vous a été assigné";
-    //     if ($assigner) {
-    //         $message .= " par " . $assigner->prenom . " " . $assigner->nom;
-    //     }
-
-    //     $notification = [
-    //         'recipient_user_id' => $assigned_to,
-    //         'actor_user_id' => $assigned_by,
-    //         'document_id' => $document_id,
-    //         'action' => 'document_assigned',
-    //         'message' => $message,
-    //         'is_read' => 0,
-    //         'created_at' => date('Y-m-d H:i:s')
-    //     ];
-
-    //     return $notif->insert($notification);
-    // }
+        echo "error";
+    }
 }

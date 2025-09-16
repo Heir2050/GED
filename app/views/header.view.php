@@ -1,14 +1,28 @@
 <?php
     $section = URL(1) ?? 'Home';
-
     $ses = new \Core\Session();
 
-    // use Model\Notification;
-    // $notif = new Notification();
-    // $userId = $_SESSION['USER']->id ?? 0;
-    // $notifCount = $notif->getUnreadCount($userId);
-    // $notifications = $notif->getUserNotifications($userId); // Ajoute cette ligne
+    // Charger les notifications si l'utilisateur est connecté
+    $notifCount = 0;
+    $notifications = [];
+
+    if ($ses->is_logged_in()) {
+        // Trouver l'employé correspondant à l'utilisateur
+        $userModel = new \Model\User();
+        $employeModel = new \Model\Employes();
+        $notificationModel = new \Model\Notification();
+        
+        $user = $userModel->first(['id' => $ses->user('id')]);
+        $employe = $employeModel->first(['email' => $user->email]);
+        
+        if ($employe) {
+            $notifCount = $notificationModel->getUnreadCount($employe->id);
+            $notifications = $notificationModel->getUnreadNotifications($employe->id, 5);
+        }
+    }
 ?>
+
+<!-- Le reste du code header reste inchangé -->
 
 <header x-data="{menuToggle: false}" class="sticky top-0 z-99999 flex w-full border-gray-200 bg-white lg:border-b dark:border-gray-800 dark:bg-gray-900">
     <div class="flex grow flex-col items-center justify-between lg:flex-row lg:px-6">
@@ -135,7 +149,7 @@
                 <!-- Dark Mode Toggler -->
 
                 <!-- Notification Menu Area -->
-                <div class="relative" x-data="{ dropdownOpen: false, notifying: true }" @click.outside="dropdownOpen = false">
+                <div class="relative" x-data="{ dropdownOpen: false, notifying: <?= $notifCount > 0 ? 'true' : 'false' ?> }" @click.outside="dropdownOpen = false">
                     <button class="hover:text-dark-900 relative flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white" @click.prevent="dropdownOpen = ! dropdownOpen; notifying = false">
                         <?php if (isset($notifCount) > 0): ?>
                             <span :class="!notifying ? 'hidden' : 'flex'" class="absolute top-0.5 right-0 z-1 rounded-full bg-brand-500" style="height: 1.2rem;width: 1.2rem; display: flex; align-items: center; justify-content: center; color: white; font-size: .8rem;right: -5px;">
@@ -155,11 +169,17 @@
                                     Notification
                                 </h5>
 
-                                <button @click="dropdownOpen = false" class="text-gray-500 dark:text-gray-400">
-                                    <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M6.21967 7.28131C5.92678 6.98841 5.92678 6.51354 6.21967 6.22065C6.51256 5.92775 6.98744 5.92775 7.28033 6.22065L11.999 10.9393L16.7176 6.22078C17.0105 5.92789 17.4854 5.92788 17.7782 6.22078C18.0711 6.51367 18.0711 6.98855 17.7782 7.28144L13.0597 12L17.7782 16.7186C18.0711 17.0115 18.0711 17.4863 17.7782 17.7792C17.4854 18.0721 17.0105 18.0721 16.7176 17.7792L11.999 13.0607L7.28033 17.7794C6.98744 18.0722 6.51256 18.0722 6.21967 17.7794C5.92678 17.4865 5.92678 17.0116 6.21967 16.7187L10.9384 12L6.21967 7.28131Z" fill="" />
-                                    </svg>
-                                </button>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="markAllNotificationsAsRead()" class="text-xs text-blue-600 hover:text-blue-800">
+                                        Tout marquer comme lu
+                                    </button>
+
+                                    <button @click="dropdownOpen = false" class="text-gray-500 dark:text-gray-400">
+                                        <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M6.21967 7.28131C5.92678 6.98841 5.92678 6.51354 6.21967 6.22065C6.51256 5.92775 6.98744 5.92775 7.28033 6.22065L11.999 10.9393L16.7176 6.22078C17.0105 5.92789 17.4854 5.92788 17.7782 6.22078C18.0711 6.51367 18.0711 6.98855 17.7782 7.28144L13.0597 12L17.7782 16.7186C18.0711 17.0115 18.0711 17.4863 17.7782 17.7792C17.4854 18.0721 17.0105 18.0721 16.7176 17.7792L11.999 13.0607L7.28033 17.7794C6.98744 18.0722 6.51256 18.0722 6.21967 17.7794C5.92678 17.4865 5.92678 17.0116 6.21967 16.7187L10.9384 12L6.21967 7.28131Z" fill="" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- Pour mettre en avant le notification non-lue -->
@@ -176,18 +196,24 @@
                             ?>
 
                             <ul id="notif-list" class="custom-scrollbar flex h-auto flex-col overflow-y-auto">
-                                <?php foreach (array_merge($unread, $read) as $notif): ?>
-                                    <li data-id="<?= $notif->id ?>" data-document-id="<?= $notif->document_id ?>" data-conge-id="<?= $notif->conge_id ?>" class="notif-item rounded-lg <?= (empty($notif->is_read) || $notif->is_read == 0) ? ' font-bold bg-blue-light-50' : '' ?>" style="margin:.2rem 0;">
-                                        <a href="#" class="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5">
+                                <?php foreach ($notifications as $notif): ?>
+                                    <li data-id="<?= $notif->id ?>" data-dossier-id="<?= $notif->dossier_id ?>" class="notif-item rounded-lg <?= $notif->is_read ? '' : 'bg-blue-50 border-l-4 border-blue-500' ?>" style="margin:.2rem 0;">
+                                        <a href="#" class="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-blue-100 dark:border-gray-800">
                                             <span class="block">
-                                                <span class="text-theme-sm mb-1.5 block text-gray-500 dark:text-gray-400">
+                                                <span class="text-theme-sm mb-1.5 block <?= $notif->is_read ? 'text-gray-500' : 'text-gray-700' ?>">
                                                     <?= esc($notif->message) ?>
-                                                    <?php if (!empty($notif->actor_name)): ?>
-                                                        par <span class="font-medium text-gray-800 dark:text-white/90"><?= esc($notif->actor_name . ' ' . $notif->prenom) ?></span>
+                                                    <?php if (!empty($notif->uploader_nom)): ?><br>
+                                                        <span class="text-sm text-gray-400">par <?= esc($notif->uploader_prenom . ' ' . $notif->uploader_nom) ?></span>
+                                                    <?php endif; ?>
+                                                    <?php if ($notif->nb_documents > 0): ?> <br>
+                                                        <span class="text-sm text-green-600"><?= $notif->nb_documents ?> document(s) ajouté(s)</span>
                                                     <?php endif; ?>
                                                 </span>
-                                                <span class="text-theme-xs flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                                                    <span><?= $notif->created_at ?></span>
+                                                <span class="text-theme-xs flex items-center gap-2 <?= $notif->is_read ? 'text-gray-400' : 'text-blue-600' ?>">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                    </svg>
+                                                    <span><?= date('d/m/Y H:i', strtotime($notif->date_notification)) ?></span>
                                                 </span>
                                             </span>
                                         </a>
@@ -196,11 +222,16 @@
                             </ul>
 
                             <a href="<?= ROOT ?>/notifications" class="text-theme-sm shadow-theme-xs mt-3 flex justify-center rounded-lg border border-gray-300 bg-white p-3 font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
-                                View All Notification
+                                Voir tous les Notification
                             </a>
-                        <?php else : ?>
-                            <p  class="flex gap-3 rounded-lg p-3 px-4.5 py-3 dark:border-gray-800 dark:hover:bg-white/5">No notification yet</p>
-                        <?php endif; ?>
+                            <?php else : ?>
+                                <div class="flex flex-col items-center justify-center h-full">
+                                    <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                    </svg>
+                                    <p class="text-gray-500 text-center">Aucune notification</p>
+                                </div>
+                            <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -290,36 +321,93 @@
             e.preventDefault();
 
             const notifId = this.dataset.id;
-            const documentId = this.dataset.documentId;
-            const congeId = this.dataset.congeId; // Nouveau
-            const message = this.querySelector('.text-theme-sm').innerText;
-            const date = this.querySelector('.text-theme-xs span').innerText;
+            const dossierId = this.dataset.dossierId;
 
             // Marquer comme lu
-            fetch('<?= ROOT ?>/notifications/mark_read/' + notifId);
-
-            // Afficher la modale
-            document.getElementById('notif-modal-title').innerText = "Détails de la notification";
-            document.getElementById('notif-modal-content').innerHTML = `
-                <p style="margin-bottom:1rem;"><strong>Message :</strong> ${message}</p>
-                <p><strong>Date :</strong> ${date}</p>
-            `;
-            
-            // Gérer le lien "Plus de détails"
-            const detailsLink = document.getElementById('notif-details-link');
-            if (documentId) {
-                // Notification pour document
-                detailsLink.href = '<?= ROOT ?>/details/' + documentId;
-                detailsLink.style.display = 'inline-block';
-            } else if (congeId) {
-                // Notification pour congé
-                detailsLink.href = '<?= ROOT ?>/detailconges/' + congeId;
-                detailsLink.style.display = 'inline-block';
-            } else {
-                detailsLink.style.display = 'none';
-            }
-
-            document.getElementById('notif-modal').style.display = 'flex';
+            fetch('<?= ROOT ?>/notifications/mark_read/' + notifId)
+                .then(response => {
+                    if (response.ok) {
+                        // Mettre à jour l'apparence
+                        this.classList.remove('bg-blue-50', 'border-l-4', 'border-blue-500');
+                        
+                        // Mettre à jour le compteur
+                        const badge = document.querySelector('.relative .bg-red-500');
+                        if (badge) {
+                            const currentCount = parseInt(badge.textContent);
+                            if (currentCount > 1) {
+                                badge.textContent = currentCount - 1;
+                            } else {
+                                badge.style.display = 'none';
+                            }
+                        }
+                        
+                        // Rediriger vers le dossier
+                        if (dossierId) {
+                            window.location.href = '<?= ROOT ?>/document?dossier_id=' + dossierId;
+                        }
+                    }
+                });
         });
     });
 </script>
+
+
+<!-- 
+<script>
+    function markAllNotificationsAsRead() {
+        fetch('<?= ROOT ?>/notifications/mark_all_read')
+            .then(response => {
+                if (response.ok) {
+                    // Masquer toutes les notifications
+                    document.querySelectorAll('.notif-item').forEach(item => {
+                        item.classList.remove('bg-blue-50', 'border-l-4', 'border-blue-500');
+                    });
+                    
+                    // Mettre à jour le compteur
+                    const badge = document.querySelector('.relative .bg-red-500');
+                    if (badge) {
+                        badge.style.display = 'none';
+                    }
+                    
+                    // Actualiser la page après un court délai
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                }
+            });
+    }
+
+    document.querySelectorAll('.notif-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            const notifId = this.dataset.id;
+            const documentId = this.dataset.documentId;
+
+            // Marquer comme lu
+            fetch('<?= ROOT ?>/notifications/mark_read/' + notifId)
+                .then(response => {
+                    if (response.ok) {
+                        // Mettre à jour l'apparence
+                        this.classList.remove('bg-blue-50', 'border-l-4', 'border-blue-500');
+                        
+                        // Mettre à jour le compteur
+                        const badge = document.querySelector('.relative .bg-red-500');
+                        if (badge) {
+                            const currentCount = parseInt(badge.textContent);
+                            if (currentCount > 1) {
+                                badge.textContent = currentCount - 1;
+                            } else {
+                                badge.style.display = 'none';
+                            }
+                        }
+                        
+                        // Rediriger vers le document
+                        if (documentId) {
+                            window.location.href = '<?= ROOT ?>/document/view/' + documentId;
+                        }
+                    }
+                });
+        });
+    });
+</script> -->
