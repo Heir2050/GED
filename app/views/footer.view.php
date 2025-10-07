@@ -320,6 +320,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     `;
     document.head.appendChild(style);
+
+
+
+    function markAllNotificationsAsRead() {
+        fetch('<?= ROOT ?>/notifications/mark_all_read')
+            .then(response => {
+                if (response.ok) {
+                    // Masquer toutes les notifications
+                    document.querySelectorAll('.notif-item').forEach(item => {
+                        item.classList.remove('bg-blue-50', 'border-l-4', 'border-blue-500');
+                    });
+                    
+                    // Mettre à jour le compteur
+                    const badge = document.querySelector('.relative .bg-red-500');
+                    if (badge) {
+                        badge.style.display = 'none';
+                    }
+                    
+                    // Actualiser la page après un court délai
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                }
+            });
+    }
 </script>
 
 

@@ -69,19 +69,19 @@ CREATE TABLE Documents (
 );
 
 -- Table pour traquer qui a ouvert les documents
-CREATE TABLE ConsultationsDocuments (
+CREATE TABLE IF NOT EXISTS ConsultationsDocuments (
     id INT PRIMARY KEY AUTO_INCREMENT,
     document_id INT NOT NULL,
     employe_id INT NOT NULL,
     date_consultation DATETIME DEFAULT CURRENT_TIMESTAMP,
     type_consultation ENUM('OUVERTURE', 'TELECHARGEMENT') NOT NULL,
     
-    -- Conserver l'historique même si l'employé est supprimé
     FOREIGN KEY (document_id) REFERENCES Documents(id) ON DELETE CASCADE,
-    FOREIGN KEY (employe_id) REFERENCES Employes(id) ON DELETE NO ACTION,
+    FOREIGN KEY (employe_id) REFERENCES Employes(id) ON DELETE CASCADE,
     
     INDEX idx_document_employe (document_id, employe_id),
-    INDEX idx_date_consultation (date_consultation)
+    INDEX idx_date_consultation (date_consultation),
+    INDEX idx_type_consultation (type_consultation)
 );
 
 -- Table des notifications simplifiée

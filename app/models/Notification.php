@@ -150,4 +150,104 @@ class Notification
         
         return $this->query($query, ['dossier_id' => $dossier_id]);
     }
+
+
+
+
+    public function getUserActionsForDossier($dossier_id)
+    {
+        $query = "SELECT 
+                    e.id, 
+                    e.nom, 
+                    e.prenom, 
+                    e.email, 
+                    e.photo,
+                    s.nom as service_nom,
+                    MAX(n.date_lecture) as derniere_consultation,
+                    COUNT(DISTINCT CASE WHEN n.is_read = TRUE THEN n.id END) as notifications_vues,
+                    COUNT(DISTINCT cd.id) as documents_consultes,
+                    COUNT(DISTINCT CASE WHEN cd.type_consultation = 'TELECHARGEMENT' THEN cd.id END) as documents_telecharges
+                FROM Employes e
+                INNER JOIN Services s ON e.service_id = s.id
+                LEFT JOIN Notifications n ON e.id = n.recipient_id AND n.dossier_id = :dossier_id
+                LEFT JOIN ConsultationsDocuments cd ON e.id = cd.employe_id 
+                    AND cd.document_id IN (SELECT id FROM Documents WHERE dossier_id = :dossier_id2)
+                WHERE e.service_id = (SELECT service_id FROM Dossiers WHERE id = :dossier_id3)
+                AND e.est_actif = TRUE
+                GROUP BY e.id
+                ORDER BY e.nom, e.prenom";
+        
+        return $this->query($query, [
+            'dossier_id' => $dossier_id,
+            'dossier_id2' => $dossier_id,
+            'dossier_id3' => $dossier_id
+        ]);
+    }
+
+
+
+
+
+
+
+
+
+
+    // public function getDossierViewers($dossier_id)
+    // {
+    //     $query = "SELECT DISTINCT e.id, e.nom, e.prenom, e.email, e.photo,
+    //                     s.nom as service_nom, n.date_lecture
+    //             FROM Notifications n
+    //             INNER JOIN Employes e ON n.recipient_id = e.id
+    //             INNER JOIN Services s ON e.service_id = s.id
+    //             WHERE n.dossier_id = :dossier_id
+    //             AND n.is_read = TRUE
+    //             AND n.date_lecture IS NOT NULL
+    //             ORDER BY n.date_lecture DESC";
+        
+    //     return $this->query($query, ['dossier_id' => $dossier_id]);
+    // }
+
+    /**
+     * Récupère les statistiques de consultation d'un dossier
+     */
+    public function getDossierViewStats($dossier_id)
+    {
+        $query = "SELECT 
+                    COUNT(DISTINCT n.recipient_id) as total_viewers,
+                    COUNT(*) as total_notifications,
+                    SUM(CASE WHEN n.is_read = TRUE THEN 1 ELSE 0 END) as notifications_lues,
+                    MIN(n.date_lecture) as premiere_consultation,
+                    MAX(n.date_lecture) as derniere_consultation
+                FROM Notifications n
+                WHERE n.dossier_id = :dossier_id";
+        
+        $result = $this->query($query, ['dossier_id' => $dossier_id]);
+        return $result[0] ?? null;
+    }
+
+    /**
+     * Récupère les employés qui n'ont pas encore consulté le dossier
+     */
+    public function getDossierNonViewers($dossier_id, $service_id)
+    {
+        $query = "SELECT e.*, s.nom as service_nom
+                FROM Employes e
+                INNER JOIN Services s ON e.service_id = s.id
+                WHERE e.service_id = :service_id
+                AND e.est_actif = TRUE
+                AND e.id NOT IN (
+                    SELECT DISTINCT n.recipient_id
+                    FROM Notifications n
+                    WHERE n.dossier_id = :dossier_id
+                    AND n.is_read = TRUE
+                )
+                ORDER BY e.nom, e.prenom";
+        
+        return $this->query($query, [
+            'dossier_id' => $dossier_id,
+            'service_id' => $service_id
+        ]);
+    }
+    
 }

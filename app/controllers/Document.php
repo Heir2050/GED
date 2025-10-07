@@ -218,6 +218,44 @@ class Document
         $this->view('documents', $data);
     }
 
+    // public function dossier_stats($dossier_id = null)
+    // {
+    //     $ses = new Session();
+    //     $req = new Request();
+    //     $dossierModel = new Dossiers();
+    //     $notificationModel = new Notification();
+
+    //     $data = [];
+
+    //     if ($dossier_id) {
+    //         $data['dossier'] = $dossierModel->first(['id' => $dossier_id]);
+    //         $data['notifications'] = $notificationModel->getDossierNotifications($dossier_id);
+    //         $data['viewers'] = $notificationModel->getDossierViewers($dossier_id);
+            
+    //         // Récupérer les employés du service qui n'ont pas consulté
+    //         $employeModel = new Employes();
+    //         $data['non_viewers'] = $employeModel->query("
+    //             SELECT e.* 
+    //             FROM Employes e 
+    //             WHERE e.service_id = :service_id 
+    //             AND e.est_actif = 1 
+    //             AND e.id NOT IN (
+    //                 SELECT n.recipient_id 
+    //                 FROM Notifications n 
+    //                 WHERE n.dossier_id = :dossier_id 
+    //                 AND n.is_read = TRUE
+    //             )
+    //         ", ['service_id' => $data['dossier']->service_id, 'dossier_id' => $dossier_id]);
+    //     }
+
+    //     $this->view('dossier_stats', $data);
+    // }
+
+
+
+
+    // Dans Controller\Document.php
+
     public function dossier_stats($dossier_id = null)
     {
         $ses = new Session();
@@ -229,25 +267,131 @@ class Document
 
         if ($dossier_id) {
             $data['dossier'] = $dossierModel->first(['id' => $dossier_id]);
-            $data['notifications'] = $notificationModel->getDossierNotifications($dossier_id);
-            $data['viewers'] = $notificationModel->getDossierViewers($dossier_id);
             
-            // Récupérer les employés du service qui n'ont pas consulté
-            $employeModel = new Employes();
-            $data['non_viewers'] = $employeModel->query("
-                SELECT e.* 
-                FROM Employes e 
-                WHERE e.service_id = :service_id 
-                AND e.est_actif = 1 
-                AND e.id NOT IN (
-                    SELECT n.recipient_id 
-                    FROM Notifications n 
-                    WHERE n.dossier_id = :dossier_id 
-                    AND n.is_read = TRUE
-                )
-            ", ['service_id' => $data['dossier']->service_id, 'dossier_id' => $dossier_id]);
+            if ($data['dossier']) {
+                $data['user_actions'] = $notificationModel->getUserActionsForDossier($dossier_id);
+                $data['dossier_id'] = $dossier_id;
+            }
         }
 
         $this->view('dossier_stats', $data);
     }
+
+    // Dans Controller\Document.php
+    // Pour les consultations de documents
+/*
+    public function view($document_id = null)
+    {
+        $ses = new Session();
+        $req = new Request();
+        $documentModel = new Documents();
+        $consultationModel = new ConsultationDocument();
+
+        if ($document_id && $ses->is_logged_in()) {
+            // Récupérer le document
+            $doc = $documentModel->first(['id' => $document_id]);
+            
+            if ($doc) {
+                // Trouver l'employé correspondant
+                $userModel = new User();
+                $employeModel = new Employes();
+                $user = $userModel->first(['id' => $ses->user('id')]);
+                $employe = $employeModel->first(['email' => $user->email]);
+                
+                if ($employe) {
+                    // Enregistrer l'action de consultation
+                    $consultationModel->trackAction(
+                        $document_id, 
+                        $employe->id, 
+                        'OUVERTURE',
+                        $_SERVER['REMOTE_ADDR'] ?? null,
+                        $_SERVER['HTTP_USER_AGENT'] ?? null
+                    );
+                }
+                
+                // Rediriger vers le fichier
+                $dossier = new Dossiers();
+                $dossier_info = $dossier->first(['id' => $doc->dossier_id]);
+                
+                if ($dossier_info && file_exists($dossier_info->chemin . $doc->nom_stockage)) {
+                    header('Content-Type: ' . $doc->type);
+                    header('Content-Disposition: inline; filename="' . $doc->nom . '"');
+                    readfile($dossier_info->chemin . $doc->nom_stockage);
+                    exit;
+                }
+            }
+        }
+        
+        redirect('documents');
+    }
+
+    public function download($document_id = null)
+    {
+        $ses = new Session();
+        $req = new Request();
+        $documentModel = new Documents();
+        $consultationModel = new ConsultationDocument();
+
+        if ($document_id && $ses->is_logged_in()) {
+            // Récupérer le document
+            $doc = $documentModel->first(['id' => $document_id]);
+            
+            if ($doc) {
+                // Trouver l'employé correspondant
+                $userModel = new User();
+                $employeModel = new Employes();
+                $user = $userModel->first(['id' => $ses->user('id')]);
+                $employe = $employeModel->first(['email' => $user->email]);
+                
+                if ($employe) {
+                    // Enregistrer l'action de téléchargement
+                    $consultationModel->trackAction(
+                        $document_id, 
+                        $employe->id, 
+                        'TELECHARGEMENT',
+                        $_SERVER['REMOTE_ADDR'] ?? null,
+                        $_SERVER['HTTP_USER_AGENT'] ?? null
+                    );
+                }
+                
+                // Télécharger le fichier
+                $dossier = new Dossiers();
+                $dossier_info = $dossier->first(['id' => $doc->dossier_id]);
+                
+                if ($dossier_info && file_exists($dossier_info->chemin . $doc->nom_stockage)) {
+                    header('Content-Type: application/octet-stream');
+                    header('Content-Disposition: attachment; filename="' . $doc->nom . '"');
+                    header('Content-Length: ' . filesize($dossier_info->chemin . $doc->nom_stockage));
+                    readfile($dossier_info->chemin . $doc->nom_stockage);
+                    exit;
+                }
+            }
+        }
+        
+        redirect('documents');
+    }
+
+    public function user_actions($employe_id = null, $dossier_id = null)
+    {
+        $ses = new Session();
+        $req = new Request();
+        $employeModel = new Employes();
+        $dossierModel = new Dossiers();
+        $consultationModel = new ConsultationDocument();
+
+        $data = [];
+
+        if ($employe_id && $dossier_id) {
+            $data['employe'] = $employeModel->first(['id' => $employe_id]);
+            $data['dossier'] = $dossierModel->first(['id' => $dossier_id]);
+            
+            if ($data['employe'] && $data['dossier']) {
+                $data['actions'] = $consultationModel->getUserActionsForDossier($employe_id, $dossier_id);
+                $data['stats'] = $consultationModel->getUserActionDetails($employe_id, $dossier_id);
+            }
+        }
+
+        $this->view('user_actions', $data);
+    }
+        */
 }
