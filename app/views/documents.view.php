@@ -285,7 +285,7 @@
     <?php endif; ?>
     <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
         <!-- Breadcrumb Start -->
-        <div x-data="{ pageName: `Documents` }" class="mb-6">
+        <!-- <div x-data="{ pageName: `Documents` }" class="mb-6">
             <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-white/90" x-text="pageName">Documents</h2>
                 <nav>
@@ -297,18 +297,27 @@
                     </button>
                 </nav>
             </div>
-        </div>
+        </div> -->
         
         <?php if (isset($dossier_courant)): ?>
-            <!-- Affichage des documents d'un dossier spécifique -->
-            <a href="<?= ROOT ?>/document" class="back-button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="mr-2">
-                    <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5z"/>
-                </svg>
-                Retour aux dossiers
-            </a>
+                <!-- Affichage des documents d'un dossier spécifique -->
+                <a href="<?= ROOT ?>/document" class="back-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="mr-2">
+                        <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5z"/>
+                    </svg>
+                    Retour aux dossiers
+                </a>
             
-            <h3 class="text-lg font-semibold mb-4">Documents du dossier: <?= esc($dossier_courant->nom) ?></h3>
+            <!-- Ajouter un lien vers les états utilisateurs -->
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">Documents du dossier: <?= esc($dossier_courant->nom) ?></h3>
+                <a href="<?= ROOT ?>/document/etats_utilisateurs/<?= $dossier_courant->id ?>" class="inline-flex items-center gap-2 px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="mr-2">
+                        <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+                    </svg>
+                    Voir les états des utilisateurs
+                </a>
+            </div>
             
             <?php if (!empty($documents)): ?>
                 <div class="rounded-2xl bg-white p-6">
@@ -520,6 +529,31 @@
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+</script>
+
+
+<script>
+    function cloturerDossier(dossierId) {
+        if (confirm('Êtes-vous sûr de vouloir clôturer ce dossier ? Cette action est définitive.')) {
+            window.location.href = '<?= ROOT ?>/document/cloturer_dossier/' + dossierId;
+        }
+    }
+
+    function archiverDossier(dossierId) {
+        if (confirm('Êtes-vous sûr de vouloir archiver ce dossier ? Il ne sera plus visible dans la liste principale.')) {
+            window.location.href = '<?= ROOT ?>/document/archiver_dossier/' + dossierId;
+        }
+    }
+
+    // Fonction helper pour les labels d'état
+    function getEtatLabel(etat) {
+        const labels = {
+            'NON_OUVERT': 'Non ouvert',
+            'TRAITEMENT': 'En traitement', 
+            'CLOTURE': 'Clôturé'
+        };
+        return labels[etat] || etat;
     }
 </script>
 

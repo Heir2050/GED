@@ -48,6 +48,28 @@ CREATE TABLE Dossiers (
     INDEX idx_service (service_id),
     INDEX idx_chemin (chemin)
 );
+ALTER TABLE Dossiers 
+ADD COLUMN est_archive BOOLEAN DEFAULT FALSE AFTER createur_id,
+ADD COLUMN date_archivage DATETIME NULL AFTER est_archive;
+
+-- Table pour suivre l'état des dossiers par utilisateur
+CREATE TABLE EtatDossierUtilisateur (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    dossier_id INT NOT NULL,
+    employe_id INT NOT NULL,
+    etat ENUM('NON_OUVERT', 'TRAITEMENT', 'CLOTURE') DEFAULT 'NON_OUVERT',
+    date_ouverture DATETIME NULL,
+    date_cloture DATETIME NULL,
+    date_derniere_modification DATETIME DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (dossier_id) REFERENCES Dossiers(id) ON DELETE CASCADE,
+    FOREIGN KEY (employe_id) REFERENCES Employes(id) ON DELETE CASCADE,
+    
+    UNIQUE KEY unique_dossier_employe (dossier_id, employe_id),
+    
+    INDEX idx_dossier_etat (dossier_id, etat),
+    INDEX idx_employe_etat (employe_id, etat)
+);
 
 -- Table des documents simplifiée
 CREATE TABLE Documents (
@@ -174,6 +196,42 @@ INSERT INTO TypesAction (code, description) VALUES
 ALTER TABLE documents 
 ADD COLUMN taille BIGINT NOT NULL DEFAULT 0 AFTER nom_stockage,
 ADD COLUMN type VARCHAR(100) NOT NULL DEFAULT 'application/octet-stream' AFTER taille;
+
+
+-- Trigger pour créer automatiquement les entrées d'état lors de la création d'un dossier
+DELIMITER //
+CREATE TRIGGER after_dossier_insert
+AFTER INSERT ON Dossiers
+FOR EACH ROW
+BEGIN
+    INSERT INTO EtatDossierUtilisateur (dossier_id, employe_id, etat)
+    SELECT NEW.id, e.id, 'NON_OUVERT'
+    FROM Employes e
+    WHERE e.service_id = NEW.service_id 
+    AND e.est_actif = TRUE
+    AND e.id != NEW.createur_id;
+END //
+DELIMITER ;
+
+-- Créer le trigger
+DELIMITER //
+
+CREATE TRIGGER after_dossier_insert
+AFTER INSERT ON Dossiers
+FOR EACH ROW
+BEGIN
+    -- Créer les entrées d'état pour tous les employés du service (sauf le créateur)
+    INSERT INTO etatdossierutilisateur (dossier_id, employe_id, etat)
+    SELECT NEW.id, e.id, 'NON_OUVERT'
+    FROM employes e
+    WHERE e.service_id = NEW.service_id 
+    AND e.est_actif = TRUE
+    AND e.id != NEW.createur_id;
+END//
+
+DELIMITER ;
+
+
 
 
 

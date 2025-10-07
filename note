@@ -1,0 +1,10 @@
+jusqu'a maintenant un utilisateur peut ajouter un dossier avec des fichiers a l'interieur et ceux dernier peut etre visualiser par des utilisateurs du meme services seulement
+1. pour chaque dossier, j'aimerais qu'il y est une liste affichant des utilisateurs et leurs  états sur cette dossier et voici comment:
+- état non ouvert si l'utilisateur n'a pas ouvert le dossier
+- état traitement si l'utilisateur a ouvert le dossier
+- état cloturer si l'utilisateur a terminé le traitement et il va cliquer sur button cloturer pour dire qu'il a deja finit avec le dossier et fichier
+- Si tous les utilisateurs ont deja cloturer le dossier, dans ce cas il aura un boutton qu'on cliquera dessus pour archiver les dossiers entier
+- les dossiers archivés n'apparaitrons pas dans la liste des documents officiel, mais il aura un autre liste dediés pour cela.
+
+1. envoie de donné a partir du fonction(role) ou sur service. ca veut dire que l'admin ou le personne qui a ajouter le dossier et leurs fichier peut etre envoie par d'autre services
+exemple, un user de service devellopement peut ajouter un dossier avec des fichiers dedans ceux

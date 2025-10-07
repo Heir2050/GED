@@ -11,6 +11,8 @@ use Model\Notification;
 use Model\User;
 use Model\Employes;
 
+use Model\EtatDossierUtilisateur;
+
 class Document
 {
     use MainController;
@@ -21,26 +23,45 @@ class Document
         $req = new Request();
         $document = new Documents();
         $dossier = new Dossiers();
-        $notification = new Notification();
+        
         $userModel = new User();
         $employeModel = new Employes();
 
         $data = [];
 
-        // Récupérer tous les dossiers avec le nombre de documents
+        $service_id = $this->getServiceIdUtilisateur($ses);
+
+        // Récupérer seulement les dossiers non archivés
         $data['dossiers'] = $dossier->query("
             SELECT d.*, COUNT(doc.id) as nb_documents 
             FROM dossiers d 
             LEFT JOIN documents doc ON d.id = doc.dossier_id 
+            WHERE d.est_archive = false
+            " . ($service_id ? " AND d.service_id = :service_id" : "") . "
             GROUP BY d.id
             ORDER BY d.nom
-        ");
+        ", $service_id ? ['service_id' => $service_id] : []);
 
         // Si un dossier est spécifié dans l'URL, afficher ses documents
         $dossier_id = $req->get('dossier_id');
         if ($dossier_id) {
             $data['documents'] = $document->where(['dossier_id' => $dossier_id]);
             $data['dossier_courant'] = $dossier->first(['id' => $dossier_id]);
+            
+            // Récupérer les états des utilisateurs pour ce dossier
+            if ($data['dossier_courant']) {
+                // Initialiser les états si nécessaire
+                $dossier->initialiserEtatsDossier($dossier_id);
+                
+                $data['etats_utilisateurs'] = $dossier->getEtatsUtilisateurs($dossier_id);
+                $data['tous_ont_cloture'] = $dossier->tousUtilisateursOntCloture($dossier_id);
+                
+                // Mettre à jour l'état de l'utilisateur courant à "TRAITEMENT" s'il ouvre le dossier
+                $employe_id = $this->getEmployeId($ses);
+                if ($employe_id) {
+                    $dossier->mettreAJourEtat($dossier_id, $employe_id, 'TRAITEMENT');
+                }
+            }
         }
 
         // Création d'un document
@@ -217,6 +238,184 @@ class Document
 
         $this->view('documents', $data);
     }
+
+    public function cloturer_dossier($dossier_id = null)
+    {
+        $ses = new Session();
+        $dossier = new Dossiers();
+        
+        if ($dossier_id && $ses->is_logged_in()) {
+            $employe_id = $this->getEmployeId($ses);
+            
+            if ($employe_id) {
+                $dossier->mettreAJourEtat($dossier_id, $employe_id, 'CLOTURE');
+                message("Dossier marqué comme clôturé");
+            }
+        }
+        
+        redirect('document?dossier_id=' . $dossier_id);
+    }
+
+    public function archiver_dossier($dossier_id = null)
+    {
+        $ses = new Session();
+        $dossier = new Dossiers();
+        
+        if ($dossier_id && $ses->is_logged_in()) {
+            if ($dossier->tousUtilisateursOntCloture($dossier_id)) {
+                $dossier->archiverDossier($dossier_id);
+                message("Dossier archivé avec succès");
+                redirect('document');
+            } else {
+                message("Impossible d'archiver : tous les utilisateurs n'ont pas clôturé le dossier", 'error');
+                redirect('document?dossier_id=' . $dossier_id);
+            }
+        }
+        
+        redirect('document');
+    }
+
+    public function archives()
+    {
+        $ses = new Session();
+        $dossier = new Dossiers();
+        
+        $service_id = $this->getServiceIdUtilisateur($ses);
+        $data['dossiers_archives'] = $dossier->getDossiersArchives($service_id);
+        
+        $this->view('archives', $data);
+    }
+
+    private function getServiceIdUtilisateur($ses)
+    {
+        $employeModel = new Employes();
+        $employe = $employeModel->first(['id' => $ses->user('id')]);
+        
+        if (!$employe) {
+            $userModel = new User();
+            $user = $userModel->first(['id' => $ses->user('id')]);
+            $employe = $employeModel->first(['email' => $user->email]);
+        }
+        
+        return $employe ? $employe->service_id : null;
+    }
+
+    private function getEmployeId($ses)
+    {
+        $employeModel = new Employes();
+        $employe = $employeModel->first(['id' => $ses->user('id')]);
+        
+        if (!$employe) {
+            $userModel = new User();
+            $user = $userModel->first(['id' => $ses->user('id')]);
+            $employe = $employeModel->first(['email' => $user->email]);
+        }
+        
+        return $employe ? $employe->id : null;
+    }
+
+// Others
+protected function getEtatLabel($etat)
+{
+    $labels = [
+        'NON_OUVERT' => 'Non ouvert',
+        'TRAITEMENT' => 'En traitement', 
+        'CLOTURE' => 'Clôturé'
+    ];
+    return $labels[$etat] ?? $etat;
+}
+
+// protected function getEmployeId($ses)
+// {
+//     $employeModel = new Employes();
+//     $employe = $employeModel->first(['id' => $ses->user('id')]);
+    
+//     if (!$employe) {
+//         $userModel = new User();
+//         $user = $userModel->first(['id' => $ses->user('id')]);
+//         $employe = $employeModel->first(['email' => $user->email]);
+//     }
+    
+//     return $employe ? $employe->id : null;
+// }
+
+// Nouvelle méthode pour afficher les états des utilisateurs
+public function etats_utilisateurs($dossier_id = null)
+{
+    $ses = new Session();
+    $dossier = new Dossiers();
+    
+    $data = [];
+    $data['ses'] = $ses; // Ajouter la session aux données
+    
+    if ($dossier_id) {
+        $data['dossier_courant'] = $dossier->first(['id' => $dossier_id]);
+        
+        if ($data['dossier_courant']) {
+            // Initialiser les états si nécessaire
+            $dossier->initialiserEtatsDossier($dossier_id);
+            
+            $data['etats_utilisateurs'] = $dossier->getEtatsUtilisateurs($dossier_id);
+            $data['tous_ont_cloture'] = $dossier->tousUtilisateursOntCloture($dossier_id);
+            
+            // Mettre à jour l'état de l'utilisateur courant à "TRAITEMENT" s'il consulte cette page
+            $employe_id = $this->getEmployeId($ses);
+            if ($employe_id) {
+                $dossier->mettreAJourEtat($dossier_id, $employe_id, 'TRAITEMENT');
+            }
+        }
+    }
+    
+    $this->view('etats_utilisateurs', $data);
+}
+// Dans Document.php, ajoutez cette méthode temporaire
+public function reparer_etats()
+{
+    $dossier = new Dossiers();
+    
+    // Réinitialiser tous les états
+    $dossier->query("TRUNCATE TABLE etatdossierutilisateur");
+    
+    // Recréer tous les états
+    $dossiers = $dossier->where(['est_archive' => false]);
+    foreach ($dossiers as $d) {
+        $dossier->initialiserEtatsDossier($d->id);
+    }
+    
+    message("États des dossiers réparés avec succès");
+    redirect('document');
+}
+
+protected function getEmployeIdFromSession()
+{
+    $ses = new Session();
+    if (!$ses->is_logged_in()) {
+        return null;
+    }
+    
+    $employeModel = new \Model\Employes();
+    $employe = $employeModel->first(['id' => $ses->user('id')]);
+    
+    if (!$employe) {
+        $userModel = new \Model\User();
+        $user = $userModel->first(['id' => $ses->user('id')]);
+        if ($user) {
+            $employe = $employeModel->first(['email' => $user->email]);
+        }
+    }
+    
+    return $employe ? $employe->id : null;
+}
+
+
+
+
+
+
+
+
+
+
 
     // public function dossier_stats($dossier_id = null)
     // {
