@@ -49,7 +49,7 @@
                             <div class="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
                                 <div class="flex flex-col items-center w-full gap-6 xl:flex-row">
                                     <div class="w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
-                                        <img src="<?= get_image($row->image) ?>" alt="user" style="height: 100%;object-fit:cover;"/>
+                                        <img src="<?= get_image($row->photo) ?>" alt="user" style="height: 100%;object-fit:cover;"/>
                                     </div>
                                     <div class="order-3 xl:order-2">
                                         <h4 class="mb-2 text-lg font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">
@@ -76,7 +76,7 @@
                                         Date de creation
                                     </p>
                                     <p class="text-sm font-medium text-gray-800 dark:text-white/90" >
-                                        <?= esc($row->created_at ?? '') ?>
+                                        <?= esc($row->date_creation ?? '') ?>
                                     </p>
                                 </div>
                                 <div>
@@ -134,9 +134,9 @@
                                     <label class="flex items-center justify-center w-full aspect-square overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600 cursor-pointer hover:border-brand-500 transition-colors duration-200 bg-gray-50 dark:bg-gray-800">
                                         <!-- Image actuelle ou sélectionnée -->
                                         <img id="imagePreview" 
-                                            src="<?= !empty($row->image) ? htmlspecialchars($row->image) : 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2QxZDFkMSIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PGNpcmNsZSBjeD0iOC41IiBjeT0iOC41IiByPSIyLjUiPjwvY2lyY2xlPjxwb2x5bGluZSBwb2ludHM9IjIxIDE1IDE2IDEwIDUgMjEiPjwvcG9seWxpbmU+PC9zdmc+' ?>" 
+                                            src="<?= !empty($row->photo) ? htmlspecialchars($row->photo) : 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2QxZDFkMSIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PGNpcmNsZSBjeD0iOC41IiBjeT0iOC41IiByPSIyLjUiPjwvY2lyY2xlPjxwb2x5bGluZSBwb2ludHM9IjIxIDE1IDE2IDEwIDUgMjEiPjwvcG9seWxpbmU+PC9zdmc+' ?>" 
                                             alt="Preview" 
-                                            class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 <?= empty($row->image) ? 'opacity-0' : 'opacity-100' ?>" style="object-fit: cover;z-index: 10;">
+                                            class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 <?= empty($row->photo) ? 'opacity-0' : 'opacity-100' ?>" style="object-fit: cover;z-index: 10;">
                                         
                                         <!-- Overlay et instructions -->
                                         <div id="uploadOverlay" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300">
@@ -147,7 +147,7 @@
                                             <span class="text-xs text-gray-500 dark:text-gray-300">Formats: JPG, PNG, WEBP</span>
                                         </div>
                                         
-                                        <input id="imageUpload" type="file" name="image" accept=".jpg,.jpeg,.png,.webp" class="hidden">
+                                        <input id="imageUpload" type="file" name="photo" accept=".jpg,.jpeg,.png,.webp" class="hidden">
                                     </label>
                                 </div>
 

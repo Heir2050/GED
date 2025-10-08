@@ -5,7 +5,7 @@
 ?>
 
 <?php if (isset($action) && $action == 'add') : ?>
-    <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+    <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6 w-full">
         <div class="space-y-6">
             <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
                 <div class="p-5 space-y-6 border-t border-gray-100 dark:border-gray-800 sm:p-6">
@@ -23,8 +23,9 @@
                                 </div>
                             </div>
                         <?php endif; ?>
-                        <div class="-mx-2.5 flex flex-wrap gap-y-5">
-                            <div class="w-full md:w-1/2 px-2.5">
+                        <!-- <div class="-mx-2.5 flex flex-wrap gap-y-5"> -->
+                        <div class="-mx-2.5 grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2" style="width: 100%;margin: 0 auto">
+                            <div class="w-full md:w-1/2 ">
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Nom</label>
                                 <input type="text" name="nom" value="<?= old_value('nom') ?>" placeholder="John"
                                     class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
@@ -32,7 +33,7 @@
                                     <p class="text-theme-xs text-error-500 mt-1.5"><?= $errors['nom'] ?></p>
                                 <?php endif; ?>
                             </div>
-                            <div class="w-full md:w-1/2 px-2.5">
+                            <div class="w-full md:w-1/2 ">
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Prénom</label>
                                 <input type="text" name="prenom" value="<?= old_value('prenom') ?>" placeholder="Doe"
                                     class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
@@ -40,7 +41,7 @@
                                     <p class="text-theme-xs text-error-500 mt-1.5"><?= $errors['prenom'] ?></p>
                                 <?php endif; ?>
                             </div>
-                            <div class="w-full md:w-1/2 px-2.5">
+                            <div class="w-full md:w-1/2 ">
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Adresse Email</label>
                                 <input type="email" name="email" value="<?= old_value('email') ?>" placeholder="randomuser@pimjo.com"
                                     class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
@@ -48,14 +49,15 @@
                                     <p class="text-theme-xs text-error-500 mt-1.5"><?= $errors['email'] ?></p>
                                 <?php endif; ?>
                             </div>
-                            <div class="w-full md:w-1/2 px-2.5">
+                            <div class="w-full md:w-1/2 ">
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Service</label>
                                 <div x-data="{ isOptionSelected: false }" class="relative z-20 bg-transparent">
                                     <select name="service_id" class="dark:bg-dark-900 z-20 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" :class="isOptionSelected && 'text-gray-500 dark:text-gray-400'" @change="isOptionSelected = true">
                                         
-                                        <option value="" <?= old_select('service_id', '-') ?>>-</option>
-                                        <option value="1" <?= old_select('service_id', 'Developpement') ?>>Developpement</option>
-                                        <option value="2" <?= old_select('service_id', 'Reseau') ?>>Reseau</option>
+                                    <option value="" <?= old_select('id', '-') ?>>-</option>
+                                    <?php foreach ($services as $service): ?>
+                                            <option value="<?= $service->id ?>" <?= old_select('id', $service->id) ?>><?= $service->nom ?></option>
+                                        <?php endforeach; ?>
                                     </select>
                                     <span class="absolute z-30 text-gray-500 -translate-y-1/2 right-4 top-1/2 dark:text-gray-400">
                                         <svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -64,21 +66,19 @@
                                         </svg>
                                     </span>
                                 </div>
-                                <?php if (!empty($errors['role'])) : ?>
-                                    <p class="text-theme-xs text-error-500 mt-1.5"><?= $errors['role'] ?></p>
+                                <?php if (!empty($errors['service_id'])) : ?>
+                                    <p class="text-theme-xs text-error-500 mt-1.5"><?= $errors['service_id'] ?></p>
                                 <?php endif; ?>
                             </div>
-                            <div class="w-full md:w-1/2 px-2.5">
+                            <div class="w-full md:w-1/2 ">
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Rôle</label>
                                 <div x-data="{ isOptionSelected: false }" class="relative z-20 bg-transparent">
                                     <select name="role"
                                         class="dark:bg-dark-900 z-20 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                                         :class="isOptionSelected && 'text-gray-500 dark:text-gray-400'"
                                         @change="isOptionSelected = true">
-                                        <option value="employe" <?= old_select('role', 'employe') ?>>Employé</option>
-                                        <option value="chef" <?= old_select('role', 'chef') ?>>Chef</option>
-                                        <option value="secretaire" <?= old_select('role', 'secretaire') ?>>Secrétaire</option>
-                                        <option value="admin" <?= old_select('role', 'admin') ?>>Admin</option>
+                                        <option value="USER" <?= old_select('role', 'USER') ?>>User</option>
+                                        <option value="ADMIN" <?= old_select('role', 'ADMIN') ?>>Admin</option>
                                     </select>
                                     <span class="absolute z-30 text-gray-500 -translate-y-1/2 right-4 top-1/2 dark:text-gray-400">
                                         <svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -91,7 +91,28 @@
                                     <p class="text-theme-xs text-error-500 mt-1.5"><?= $errors['role'] ?></p>
                                 <?php endif; ?>
                             </div>
-                            <div class="w-full md:w-1/2 px-2.5">
+                            <div class="w-full md:w-1/2 ">
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Fonction</label>
+                                <div x-data="{ isOptionSelected: false }" class="relative z-20 bg-transparent">
+                                    <select name="role"
+                                        class="dark:bg-dark-900 z-20 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                                        :class="isOptionSelected && 'text-gray-500 dark:text-gray-400'"
+                                        @change="isOptionSelected = true">
+                                        <option value="USER" <?= old_select('role', 'USER') ?>>User</option>
+                                        <option value="ADMIN" <?= old_select('role', 'ADMIN') ?>>Admin</option>
+                                    </select>
+                                    <span class="absolute z-30 text-gray-500 -translate-y-1/2 right-4 top-1/2 dark:text-gray-400">
+                                        <svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                            <path d="M4.79175 7.396L10.0001 12.6043L15.2084 7.396" stroke-width="1.5" stroke-linecap="round"
+                                                stroke-linejoin="round"></path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <?php if (!empty($errors['role'])) : ?>
+                                    <p class="text-theme-xs text-error-500 mt-1.5"><?= $errors['role'] ?></p>
+                                <?php endif; ?>
+                            </div>
+                            <div class="w-full md:w-1/2 ">
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Mot de passe</label>
                                 <input type="password" name="password" placeholder="********" class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                                 <?php if (!empty($errors['password'])) : ?>
@@ -137,14 +158,14 @@
                                 </div>
                             <?php endif; ?>
                             <div class="-mx-2.5 flex flex-wrap gap-y-5">
-                                <div class="w-full md:w-1/2 px-2.5">
+                                <div class="w-full md:w-1/2 ">
                                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Nom</label>
                                     <input type="text" name="nom" value="<?= old_value('nom', $data['row']->nom) ?>" placeholder="John" class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                                     <?php if (!empty($errors['nom'])) : ?>
                                         <p class="text-theme-xs text-error-500 mt-1.5"><?= $errors['nom'] ?></p>
                                     <?php endif; ?>
                                 </div>
-                                <div class="w-full md:w-1/2 px-2.5">
+                                <div class="w-full md:w-1/2 ">
                                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Prénom</label>
                                     <input type="text" name="prenom" value="<?= old_value('prenom', $data['row']->prenom) ?>" placeholder="Doe"
                                         class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
@@ -152,7 +173,7 @@
                                         <p class="text-theme-xs text-error-500 mt-1.5"><?= $errors['prenom'] ?></p>
                                     <?php endif; ?>
                                 </div>
-                                <div class="w-full md:w-1/2 px-2.5">
+                                <div class="w-full md:w-1/2 ">
                                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Adresse Email</label>
                                     <input type="email" name="email" value="<?= old_value('email', $data['row']->email) ?>" placeholder="randomuser@pimjo.com"
                                         class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
@@ -160,7 +181,7 @@
                                         <p class="text-theme-xs text-error-500 mt-1.5"><?= $errors['email'] ?></p>
                                     <?php endif; ?>
                                 </div>
-                                <div class="w-full md:w-1/2 px-2.5">
+                                <div class="w-full md:w-1/2 ">
                                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Rôle</label>
                                     <div x-data="{ isOptionSelected: false }" class="relative z-20 bg-transparent">
                                         <select name="role"
@@ -180,7 +201,7 @@
                                         </span>
                                     </div>
                                 </div>
-                                <div class="w-full md:w-1/2 px-2.5">
+                                <div class="w-full md:w-1/2 ">
                                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Mot de passe</label>
                                     <input type="password" name="password" placeholder="********" class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                                 </div>

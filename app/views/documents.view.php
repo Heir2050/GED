@@ -431,6 +431,20 @@
             <?php endif; ?>
             
         <?php else: ?>
+            <!-- Breadcrumb Start -->
+            <div x-data="{ pageName: `Documents` }" class="mb-6">
+                <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+                    <h2 class="text-xl font-semibold text-gray-800 dark:text-white/90" x-text="pageName">Documents</h2>
+                    <nav>
+                        <button  @click="DemandeConges = true"  class="inline-flex items-center gap-2 px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600">
+                            Ajouter un Document
+                            <svg class="stroke-current" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8 3.3335V12.6668M3.3335 8H12.6668" stroke="" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </button>
+                    </nav>
+                </div>
+            </div>
             <!-- Affichage de la liste des dossiers -->
             <div class="space-y-5 sm:space-y-6">
                 <?php if (!empty($dossiers)): ?>

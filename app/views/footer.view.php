@@ -6,80 +6,80 @@
     
     <script src="<?= ROOT ?>/assets/js/main.js"></script>
 
-    <!-- Choix du type de lettre -->
-    <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const typeSelect = document.querySelector('select[name="type"]');
-    const recuFields = document.getElementById('recu-fields');
-    const envoyeFields = document.getElementById('envoye-fields');
-    
-    // Fonction pour gérer l'affichage des champs
-    function toggleFields() {
-        // Masquer tous les champs d'abord
-        recuFields.classList.add('hiddens');
-        envoyeFields.classList.add('hiddens');
+<!-- Choix du type de lettre -->
+<!-- <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.querySelector('select[name="type"]');
+        const recuFields = document.getElementById('recu-fields');
+        const envoyeFields = document.getElementById('envoye-fields');
+        
+        // Fonction pour gérer l'affichage des champs
+        function toggleFields() {
+            // Masquer tous les champs d'abord
+            recuFields.classList.add('hiddens');
+            envoyeFields.classList.add('hiddens');
 
-        // Afficher les champs correspondants
-        if (typeSelect.value === 'recu') {
-            recuFields.classList.remove('hiddens');
-        } else if (typeSelect.value === 'envoye') {
-            envoyeFields.classList.remove('hiddens');
+            // Afficher les champs correspondants
+            if (typeSelect.value === 'recu') {
+                recuFields.classList.remove('hiddens');
+            } else if (typeSelect.value === 'envoye') {
+                envoyeFields.classList.remove('hiddens');
+            }
+            
+            // Pour "interne", rien n'est affiché
         }
         
-        // Pour "interne", rien n'est affiché
-    }
-    
-    // Écouter les changements sur le select
-    typeSelect.addEventListener('change', toggleFields);
-    
-    // Appeler la fonction au chargement si une valeur est déjà sélectionnée
-    if (typeSelect.value === 'recu' || typeSelect.value === 'envoye') {
-        toggleFields();
-    }
-    
-    // Validation du formulaire
-    const form = document.getElementById('submissionForm');
-    form.addEventListener('submit', function(e) {
-        let isValid = true;
+        // Écouter les changements sur le select
+        typeSelect.addEventListener('change', toggleFields);
         
-        // Validation de base (vous pouvez ajouter plus de règles)
-        if (!typeSelect.value) {
-            alert('Veuillez sélectionner un type de document');
-            isValid = false;
+        // Appeler la fonction au chargement si une valeur est déjà sélectionnée
+        if (typeSelect.value === 'recu' || typeSelect.value === 'envoye') {
+            toggleFields();
         }
         
-        // Validation conditionnelle pour "reçu"
-        if (typeSelect.value === 'recu') {
-            const requiredRecuFields = ['numero_interne', 'numero_reception', 'date_recu', 'envoyeur'];
-            for (const fieldName of requiredRecuFields) {
-                const field = document.querySelector(`[name="${fieldName}"]`);
-                if (!field.value.trim()) {
-                    alert(`Le champ ${fieldName} est requis pour les documents reçus`);
-                    isValid = false;
-                    break;
+        // Validation du formulaire
+        const form = document.getElementById('submissionForm');
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            // Validation de base (vous pouvez ajouter plus de règles)
+            if (!typeSelect.value) {
+                alert('Veuillez sélectionner un type de document');
+                isValid = false;
+            }
+            
+            // Validation conditionnelle pour "reçu"
+            if (typeSelect.value === 'recu') {
+                const requiredRecuFields = ['numero_interne', 'numero_reception', 'date_recu', 'envoyeur'];
+                for (const fieldName of requiredRecuFields) {
+                    const field = document.querySelector(`[name="${fieldName}"]`);
+                    if (!field.value.trim()) {
+                        alert(`Le champ ${fieldName} est requis pour les documents reçus`);
+                        isValid = false;
+                        break;
+                    }
                 }
             }
-        }
-        
-        // Validation conditionnelle pour "envoyé"
-        if (typeSelect.value === 'envoye') {
-            const requiredEnvoyeFields = ['numero_expedie', 'numero_expedition', 'date_expedition', 'institution_destinataire'];
-            for (const fieldName of requiredEnvoyeFields) {
-                const field = document.querySelector(`[name="${fieldName}"]`);
-                if (!field.value.trim()) {
-                    alert(`Le champ ${fieldName} est requis pour les documents envoyés`);
-                    isValid = false;
-                    break;
+            
+            // Validation conditionnelle pour "envoyé"
+            if (typeSelect.value === 'envoye') {
+                const requiredEnvoyeFields = ['numero_expedie', 'numero_expedition', 'date_expedition', 'institution_destinataire'];
+                for (const fieldName of requiredEnvoyeFields) {
+                    const field = document.querySelector(`[name="${fieldName}"]`);
+                    if (!field.value.trim()) {
+                        alert(`Le champ ${fieldName} est requis pour les documents envoyés`);
+                        isValid = false;
+                        break;
+                    }
                 }
             }
-        }
-        
-        if (!isValid) {
-            e.preventDefault();
-        }
+            
+            if (!isValid) {
+                e.preventDefault();
+            }
+        });
     });
-});
-</script>
+</script> -->
 
 <!-- upload new documents -->
 <script>

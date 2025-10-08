@@ -8,6 +8,7 @@ use \Core\Session; //Importing namespace
 use \Core\Request;
 use Model\User;
 use \Model\Image;
+use MOdel\Services;
 
 class Users 
 {
@@ -25,13 +26,16 @@ class Users
         $users = new User();
         $req = new Request();
         $ses = new Session();
+        $services = new Services();
 
         # After doing anything, we unsure that the user is loged in.
-        // if (!$ses->is_logged_in() && $ses->user('role') == 'admin') {
-        //     message('Accés non autorisé');
-        //     redirect('home');
-        // }
+        if (!$ses->is_logged_in() && $ses->user('role') == 'ADMIN') {
+            message('Accés non autorisé');
+            redirect('home');
+        }
 
+        
+        $data['services'] = $services->findAll();
         $data['rows'] = $users->findAll();
         $data['action'] = "";
 
@@ -44,6 +48,7 @@ class Users
         $users = new User();
         $req = new Request();
         $ses = new Session();
+        $services = new Services();
         $data = [];
 
         $action = $data['action'] = URL(2) ?? 'View';
@@ -57,6 +62,7 @@ class Users
         // $users->setOrder_column('user_id');
 
         if ($action == 'add') {
+            $services = new Services();
             if ($req->posted()) { # if ($_SERVER['REQUEST_METHOD'] = 'POST') the same
                 if ($users->validate($_FILES, $_POST)) {  #$users->validate($_POST) Same code
 
@@ -92,6 +98,7 @@ class Users
                     redirect('users');
                 }
 
+                $data['services'] = $services->findAll();
                 $data['errors'] = $users->errors;
             }
 
@@ -165,7 +172,7 @@ class Users
 
         $data['rows'] = $users->findAll();
 
-        // $data['services'] = $users->findAll();
+        $data['services'] = $services->findAll();
 
         $this->view('users', $data);
     }

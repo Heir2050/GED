@@ -59,10 +59,10 @@ class User
 			$this->errors['email'] = "L'adresse mail existe déja";
 		}
 		
-		// if(!$id && empty($data['password']))
-		// {
-		// 	$this->errors['password'] = "Le mot de passe est obligatoire";
-		// }
+		if(empty($data['service_id']))
+		{
+			$this->errors['service_id'] = "Le service est obligatoire";
+		}
 
 		if(empty($this->errors))
 		{
