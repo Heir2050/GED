@@ -22,6 +22,30 @@
         background: #d4edda;
         color: #155724;
     }
+    /* Classe utilitaire équivalente */
+    .btn-green {
+        padding: 0.5rem 1.5rem;        /* py-2 px-6 */
+        background-color: #10B981;    /* bg-green-500 */
+        color: #ffffff;               /* text-white */
+        border-radius: 0.5rem;        /* rounded-lg */
+        transition: background-color 150ms ease-in-out; /* transition-colors (durée par défaut) */
+        display: inline-block;
+        text-decoration: none;
+        cursor: pointer;
+        border: none;                 /* si c'est un <button> */
+    }
+
+    /* état hover */
+    .btn-green:hover {
+        background-color: #059669;    /* hover:bg-green-600 */
+    }
+
+    /* état focus (accessibilité) */
+    .btn-green:focus {
+        outline: 2px solid rgba(5,150,105,0.25);
+        outline-offset: 2px;
+    }
+
 </style>
 
 <main>
@@ -101,8 +125,7 @@
                                     <p class="text-green-800 font-medium">✅ Tous les utilisateurs ont clôturé ce dossier</p>
                                     <p class="text-green-600 text-sm">Vous pouvez maintenant archiver le dossier</p>
                                 </div>
-                                <button onclick="archiverDossier(<?= $dossier_courant->id ?>)" 
-                                        class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                                <button onclick="archiverDossier(<?= $dossier_courant->id ?>)" class="btn-green">
                                     Archiver le dossier
                                 </button>
                             </div>

@@ -56,11 +56,21 @@ class Document
                 $data['etats_utilisateurs'] = $dossier->getEtatsUtilisateurs($dossier_id);
                 $data['tous_ont_cloture'] = $dossier->tousUtilisateursOntCloture($dossier_id);
                 
-                // Mettre à jour l'état de l'utilisateur courant à "TRAITEMENT" s'il ouvre le dossier
-                $employe_id = $this->getEmployeId($ses);
-                if ($employe_id) {
+            // Mettre à jour l'état de l'utilisateur courant à "TRAITEMENT" s'il ouvre le dossier
+            // MAIS SEULEMENT s'il n'est pas déjà clôturé
+            $employe_id = $this->getEmployeId($ses);
+            if ($employe_id) {
+                // Vérifier l'état actuel avant de le changer
+                $etat_actuel = $dossier->query("
+                    SELECT etat FROM etatdossierutilisateur 
+                    WHERE dossier_id = :dossier_id AND employe_id = :employe_id
+                ", ['dossier_id' => $dossier_id, 'employe_id' => $employe_id]);
+                
+                // Ne changer l'état que s'il n'est pas déjà CLOTURE
+                if (empty($etat_actuel) || $etat_actuel[0]->etat !== 'CLOTURE') {
                     $dossier->mettreAJourEtat($dossier_id, $employe_id, 'TRAITEMENT');
                 }
+            }
             }
         }
 
@@ -248,12 +258,38 @@ class Document
             $employe_id = $this->getEmployeId($ses);
             
             if ($employe_id) {
-                $dossier->mettreAJourEtat($dossier_id, $employe_id, 'CLOTURE');
+                error_log("Tentative de clôture - Dossier: $dossier_id, Employé: $employe_id");
+                
+                // Debug: vérifier l'état actuel
+                $etat_actuel = $dossier->query("
+                    SELECT etat FROM etatdossierutilisateur 
+                    WHERE dossier_id = :dossier_id AND employe_id = :employe_id
+                ", ['dossier_id' => $dossier_id, 'employe_id' => $employe_id]);
+                
+                error_log("État actuel: " . print_r($etat_actuel, true));
+                
+                $result = $dossier->mettreAJourEtat($dossier_id, $employe_id, 'CLOTURE');
+                error_log("Résultat mise à jour: " . ($result ? 'SUCCÈS' : 'ÉCHEC'));
+                
+                // Vérifier l'état après mise à jour
+                $etat_apres = $dossier->query("
+                    SELECT etat FROM etatdossierutilisateur 
+                    WHERE dossier_id = :dossier_id AND employe_id = :employe_id
+                ", ['dossier_id' => $dossier_id, 'employe_id' => $employe_id]);
+                
+                error_log("État après: " . print_r($etat_apres, true));
+                
                 message("Dossier marqué comme clôturé");
+            } else {
+                error_log("Employé ID non trouvé");
+                message("Erreur: Employé non trouvé", 'error');
             }
+        } else {
+            error_log("Session non connectée ou dossier_id manquant");
+            message("Erreur de session", 'error');
         }
         
-        redirect('document?dossier_id=' . $dossier_id);
+        redirect('document/etats_utilisateurs/' . $dossier_id);
     }
 
     public function archiver_dossier($dossier_id = null)
@@ -359,9 +395,19 @@ public function etats_utilisateurs($dossier_id = null)
             $data['tous_ont_cloture'] = $dossier->tousUtilisateursOntCloture($dossier_id);
             
             // Mettre à jour l'état de l'utilisateur courant à "TRAITEMENT" s'il consulte cette page
+            // MAIS SEULEMENT s'il n'est pas déjà clôturé
             $employe_id = $this->getEmployeId($ses);
             if ($employe_id) {
-                $dossier->mettreAJourEtat($dossier_id, $employe_id, 'TRAITEMENT');
+                // Vérifier l'état actuel avant de le changer
+                $etat_actuel = $dossier->query("
+                    SELECT etat FROM etatdossierutilisateur 
+                    WHERE dossier_id = :dossier_id AND employe_id = :employe_id
+                ", ['dossier_id' => $dossier_id, 'employe_id' => $employe_id]);
+                
+                // Ne changer l'état que s'il n'est pas déjà CLOTURE
+                if (empty($etat_actuel) || $etat_actuel[0]->etat !== 'CLOTURE') {
+                    $dossier->mettreAJourEtat($dossier_id, $employe_id, 'TRAITEMENT');
+                }
             }
         }
     }
