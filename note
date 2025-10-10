@@ -11,5 +11,6 @@ comme un dossier peut etre envoie il peut etre retirer, mais en conditions du re
 si le dossier est envoie, il sera possible d'etre archiver si seulement le service ou la personne envoie ce dossier a deja cloturer le dossier, ca veut dire qu'on peut marquer les etats ouvert non_ouvert, traitement et cloturer pour les utilisateurs qui ont recu le dossier, donc simplement le manipuler a la normal.
 pour raison de simplicité, le dossier envoyé sera afficher tous simplement dans la liste document.
 
-ca veut dire que l'admin ou le personne qui a ajouter le dossier et leurs fichier peut etre envoie par d'autre services
-exemple, un user de service devellopement peut ajouter un dossier avec des fichiers dedans ceux
+
+
+j'arrive bien a envoie le dossier a partir du service les utilisateurs le percoivent mais il n'arrive pas a l'ouvrir ca affiche le message suivante: Accès non autorisé à ce dossier. que ce qu'il faut pour que les dossier recu soit ouverte?

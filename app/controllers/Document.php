@@ -23,56 +23,75 @@ class Document
         $req = new Request();
         $document = new Documents();
         $dossier = new Dossiers();
+        $envoiModel = new \Model\EnvoiDossiers();
         
         $userModel = new User();
         $employeModel = new Employes();
 
         $data = [];
 
+        // if (!$ses->is_logged_in()) {
+        //     redirect('login');
+        // }
+
         $service_id = $this->getServiceIdUtilisateur($ses);
 
-        // Récupérer seulement les dossiers non archivés
-        $data['dossiers'] = $dossier->query("
-            SELECT d.*, COUNT(doc.id) as nb_documents 
-            FROM dossiers d 
-            LEFT JOIN documents doc ON d.id = doc.dossier_id 
-            WHERE d.est_archive = false
-            " . ($service_id ? " AND d.service_id = :service_id" : "") . "
-            GROUP BY d.id
-            ORDER BY d.nom
-        ", $service_id ? ['service_id' => $service_id] : []);
+        // Récupérer les informations de l'employé
+        $employe = $this->getEmployeInfo($ses);
+        if (!$employe) {
+            message("Profil employé non trouvé", 'error');
+            redirect('logout');
+        }
 
-        // Si un dossier est spécifié dans l'URL, afficher ses documents
+        // Ajouter l'employe aux données pour la vue
+        $data['employe'] = $employe;
+
+        // Récupérer les dossiers visibles
+        $data['dossiers'] = $dossier->getDossiersVisibles(
+            $employe->id, 
+            $employe->service_id, 
+            $employe->role_service
+        );
+
+        // Récupérer seulement les dossiers non archivés
+        // $data['dossiers'] = $dossier->query("
+        //     SELECT d.*, COUNT(doc.id) as nb_documents 
+        //     FROM dossiers d 
+        //     LEFT JOIN documents doc ON d.id = doc.dossier_id 
+        //     WHERE d.est_archive = false
+        //     " . ($service_id ? " AND d.service_id = :service_id" : "") . "
+        //     GROUP BY d.id
+        //     ORDER BY d.nom
+        // ", $service_id ? ['service_id' => $service_id] : []);
+
+        // Si un dossier est spécifié, afficher ses documents
         $dossier_id = $req->get('dossier_id');
         if ($dossier_id) {
             $data['documents'] = $document->where(['dossier_id' => $dossier_id]);
             $data['dossier_courant'] = $dossier->first(['id' => $dossier_id]);
             
-            // Récupérer les états des utilisateurs pour ce dossier
+            // Vérifier si l'utilisateur peut accéder à ce dossier
+            $accesAutorise = $this->verifierAccesDossier($dossier_id, $employe->id, $employe->service_id, $employe->role_service);
+            
+            if (!$accesAutorise) {
+                message("Accès non autorisé à ce dossier", 'error');
+                redirect('document');
+            }
+            
+            // Initialiser les états si nécessaire
             if ($data['dossier_courant']) {
-                // Initialiser les états si nécessaire
                 $dossier->initialiserEtatsDossier($dossier_id);
-                
                 $data['etats_utilisateurs'] = $dossier->getEtatsUtilisateurs($dossier_id);
                 $data['tous_ont_cloture'] = $dossier->tousUtilisateursOntCloture($dossier_id);
                 
-            // Mettre à jour l'état de l'utilisateur courant à "TRAITEMENT" s'il ouvre le dossier
-            // MAIS SEULEMENT s'il n'est pas déjà clôturé
-            $employe_id = $this->getEmployeId($ses);
-            if ($employe_id) {
-                // Vérifier l'état actuel avant de le changer
-                $etat_actuel = $dossier->query("
-                    SELECT etat FROM etatdossierutilisateur 
-                    WHERE dossier_id = :dossier_id AND employe_id = :employe_id
-                ", ['dossier_id' => $dossier_id, 'employe_id' => $employe_id]);
-                
-                // Ne changer l'état que s'il n'est pas déjà CLOTURE
-                if (empty($etat_actuel) || $etat_actuel[0]->etat !== 'CLOTURE') {
-                    $dossier->mettreAJourEtat($dossier_id, $employe_id, 'TRAITEMENT');
-                }
-            }
+            // Mettre à jour l'état de l'utilisateur courant
+            $this->mettreAJourEtatUtilisateur($dossier_id, $employe->id, 'TRAITEMENT');
+            
+            // Marquer les notifications d'envoi de ce dossier comme lues
+            $this->marquerNotificationsEnvoiCommeLues($dossier_id, $employe->id);
             }
         }
+
 
         // Création d'un document
         if ($req->posted() && $ses->is_logged_in()) {
@@ -395,19 +414,9 @@ public function etats_utilisateurs($dossier_id = null)
             $data['tous_ont_cloture'] = $dossier->tousUtilisateursOntCloture($dossier_id);
             
             // Mettre à jour l'état de l'utilisateur courant à "TRAITEMENT" s'il consulte cette page
-            // MAIS SEULEMENT s'il n'est pas déjà clôturé
             $employe_id = $this->getEmployeId($ses);
             if ($employe_id) {
-                // Vérifier l'état actuel avant de le changer
-                $etat_actuel = $dossier->query("
-                    SELECT etat FROM etatdossierutilisateur 
-                    WHERE dossier_id = :dossier_id AND employe_id = :employe_id
-                ", ['dossier_id' => $dossier_id, 'employe_id' => $employe_id]);
-                
-                // Ne changer l'état que s'il n'est pas déjà CLOTURE
-                if (empty($etat_actuel) || $etat_actuel[0]->etat !== 'CLOTURE') {
-                    $dossier->mettreAJourEtat($dossier_id, $employe_id, 'TRAITEMENT');
-                }
+                $this->mettreAJourEtatUtilisateur($dossier_id, $employe_id, 'TRAITEMENT');
             }
         }
     }
@@ -418,18 +427,222 @@ public function etats_utilisateurs($dossier_id = null)
 public function reparer_etats()
 {
     $dossier = new Dossiers();
+    $envoiModel = new \Model\EnvoiDossiers();
     
     // Réinitialiser tous les états
     $dossier->query("TRUNCATE TABLE etatdossierutilisateur");
     
-    // Recréer tous les états
+    // Recréer tous les états pour les dossiers internes
     $dossiers = $dossier->where(['est_archive' => false]);
     foreach ($dossiers as $d) {
         $dossier->initialiserEtatsDossier($d->id);
     }
     
+    // Recréer les états pour les dossiers envoyés
+    $envoisActifs = $envoiModel->query("
+        SELECT DISTINCT dossier_id, service_id, type_envoi, role_service 
+        FROM envoidossiers 
+        WHERE est_actif = true
+    ");
+    
+    foreach ($envoisActifs as $envoi) {
+        // Utiliser une requête directe pour ajouter les utilisateurs
+        if ($envoi->type_envoi == 'SERVICE') {
+            $query = "
+                INSERT IGNORE INTO etatdossierutilisateur (dossier_id, employe_id, etat)
+                SELECT :dossier_id, e.id, 'NON_OUVERT'
+                FROM employes e
+                WHERE e.service_id = :service_id 
+                AND e.est_actif = TRUE
+            ";
+            $params = [
+                'dossier_id' => $envoi->dossier_id,
+                'service_id' => $envoi->service_id
+            ];
+        } else if ($envoi->type_envoi == 'ROLE_SERVICE') {
+            $query = "
+                INSERT IGNORE INTO etatdossierutilisateur (dossier_id, employe_id, etat)
+                SELECT :dossier_id, e.id, 'NON_OUVERT'
+                FROM employes e
+                WHERE e.service_id = :service_id 
+                AND e.role_service = :role_service
+                AND e.est_actif = TRUE
+            ";
+            $params = [
+                'dossier_id' => $envoi->dossier_id,
+                'service_id' => $envoi->service_id,
+                'role_service' => $envoi->role_service
+            ];
+        } else {
+            continue; // Type d'envoi non supporté
+        }
+        
+        $dossier->query($query, $params);
+    }
+    
     message("États des dossiers réparés avec succès");
     redirect('document');
+}
+
+/**
+ * Méthode de test pour vérifier le fonctionnement
+ */
+public function test_etats_envoi($dossier_id = null)
+{
+    if (!$dossier_id) {
+        message("ID du dossier requis", 'error');
+        redirect('document');
+    }
+    
+    $dossier = new Dossiers();
+    $envoiModel = new \Model\EnvoiDossiers();
+    
+    // Vérifier les envois actifs pour ce dossier
+    $envois = $envoiModel->query("
+        SELECT * FROM envoidossiers 
+        WHERE dossier_id = :dossier_id AND est_actif = true
+    ", ['dossier_id' => $dossier_id]);
+    
+    echo "<h1>Test des états pour le dossier $dossier_id</h1>";
+    echo "<h2>Envois actifs :</h2>";
+    echo "<pre>" . print_r($envois, true) . "</pre>";
+    
+    // Vérifier les états actuels
+    $etats = $dossier->query("
+        SELECT edu.*, e.nom, e.prenom, s.nom as service_nom
+        FROM etatdossierutilisateur edu
+        JOIN employes e ON edu.employe_id = e.id
+        JOIN services s ON e.service_id = s.id
+        WHERE edu.dossier_id = :dossier_id
+        ORDER BY s.nom, e.nom
+    ", ['dossier_id' => $dossier_id]);
+    
+    echo "<h2>États actuels :</h2>";
+    echo "<pre>" . print_r($etats, true) . "</pre>";
+    
+    // Tester l'ajout manuel
+    echo "<h2>Test d'ajout manuel :</h2>";
+    foreach ($envois as $envoi) {
+        if ($envoi->type_envoi == 'SERVICE') {
+            $query = "
+                INSERT IGNORE INTO etatdossierutilisateur (dossier_id, employe_id, etat)
+                SELECT :dossier_id, e.id, 'NON_OUVERT'
+                FROM employes e
+                WHERE e.service_id = :service_id 
+                AND e.est_actif = TRUE
+            ";
+            $params = [
+                'dossier_id' => $envoi->dossier_id,
+                'service_id' => $envoi->service_id
+            ];
+        } else if ($envoi->type_envoi == 'ROLE_SERVICE') {
+            $query = "
+                INSERT IGNORE INTO etatdossierutilisateur (dossier_id, employe_id, etat)
+                SELECT :dossier_id, e.id, 'NON_OUVERT'
+                FROM employes e
+                WHERE e.service_id = :service_id 
+                AND e.role_service = :role_service
+                AND e.est_actif = TRUE
+            ";
+            $params = [
+                'dossier_id' => $envoi->dossier_id,
+                'service_id' => $envoi->service_id,
+                'role_service' => $envoi->role_service
+            ];
+        }
+        
+        $result = $dossier->query($query, $params);
+        echo "Ajout pour envoi {$envoi->id} (Service: {$envoi->service_id}, Type: {$envoi->type_envoi}): " . ($result ? 'SUCCÈS' : 'ÉCHEC') . "<br>";
+    }
+    
+    die(); // Arrêter l'exécution pour voir les résultats
+}
+
+/**
+ * Test de la nouvelle logique d'ajout en masse
+ */
+public function test_ajout_masse($dossier_id = null)
+{
+    if (!$dossier_id) {
+        message("ID du dossier requis", 'error');
+        redirect('document');
+    }
+    
+    $dossier = new Dossiers();
+    $envoiModel = new \Model\EnvoiDossiers();
+    $employeModel = new Employes();
+    
+    echo "<h1>Test d'ajout en masse pour le dossier $dossier_id</h1>";
+    
+    // Vérifier les envois vers des services
+    $envois = $envoiModel->query("
+        SELECT ed.*, s.nom as service_nom
+        FROM envoidossiers ed
+        JOIN services s ON ed.service_id = s.id
+        WHERE ed.dossier_id = :dossier_id AND ed.est_actif = true
+    ", ['dossier_id' => $dossier_id]);
+    
+    echo "<h2>Envois actifs :</h2>";
+    echo "<pre>" . print_r($envois, true) . "</pre>";
+    
+    foreach ($envois as $envoi) {
+        echo "<h3>Service destinataire : {$envoi->service_nom} (ID: {$envoi->service_id})</h3>";
+        
+        // Compter les employés du service
+        $employesService = $employeModel->query("
+            SELECT COUNT(*) as count 
+            FROM employes 
+            WHERE service_id = :service_id AND est_actif = TRUE
+        ", ['service_id' => $envoi->service_id]);
+        
+        echo "Nombre d'employés dans le service : " . $employesService[0]->count . "<br>";
+        
+        // Compter les employés déjà dans etatdossierutilisateur
+        $employesDansEtat = $dossier->query("
+            SELECT COUNT(*) as count 
+            FROM etatdossierutilisateur edu
+            JOIN employes e ON edu.employe_id = e.id
+            WHERE edu.dossier_id = :dossier_id 
+            AND e.service_id = :service_id
+        ", [
+            'dossier_id' => $dossier_id,
+            'service_id' => $envoi->service_id
+        ]);
+        
+        echo "Employés déjà dans etatdossierutilisateur : " . $employesDansEtat[0]->count . "<br>";
+        
+        // Simuler l'ouverture par un utilisateur du service
+        $premierEmploye = $employeModel->query("
+            SELECT id FROM employes 
+            WHERE service_id = :service_id AND est_actif = TRUE 
+            LIMIT 1
+        ", ['service_id' => $envoi->service_id]);
+        
+        if (!empty($premierEmploye)) {
+            $employeId = $premierEmploye[0]->id;
+            echo "Simulation d'ouverture par l'employé ID : $employeId<br>";
+            
+            // Utiliser notre nouvelle méthode
+            $this->mettreAJourEtatUtilisateur($dossier_id, $employeId, 'TRAITEMENT');
+            
+            // Vérifier le résultat
+            $employesApres = $dossier->query("
+                SELECT COUNT(*) as count 
+                FROM etatdossierutilisateur edu
+                JOIN employes e ON edu.employe_id = e.id
+                WHERE edu.dossier_id = :dossier_id 
+                AND e.service_id = :service_id
+            ", [
+                'dossier_id' => $dossier_id,
+                'service_id' => $envoi->service_id
+            ]);
+            
+            echo "Employés après ouverture : " . $employesApres[0]->count . "<br>";
+            echo "Résultat : " . ($employesApres[0]->count == $employesService[0]->count ? "✅ SUCCÈS - Tous ajoutés" : "❌ ÉCHEC - Pas tous ajoutés") . "<br><br>";
+        }
+    }
+    
+    die(); // Arrêter l'exécution pour voir les résultats
 }
 
 protected function getEmployeIdFromSession()
@@ -452,6 +665,320 @@ protected function getEmployeIdFromSession()
     
     return $employe ? $employe->id : null;
 }
+
+
+public function dossier_stats($dossier_id = null)
+{
+    $ses = new Session();
+    $req = new Request();
+    $dossierModel = new Dossiers();
+    $notificationModel = new Notification();
+
+    $data = [];
+
+    if ($dossier_id) {
+        $data['dossier'] = $dossierModel->first(['id' => $dossier_id]);
+        
+        if ($data['dossier']) {
+            $data['user_actions'] = $notificationModel->getUserActionsForDossier($dossier_id);
+            $data['dossier_id'] = $dossier_id;
+        }
+    }
+
+    $this->view('dossier_stats', $data);
+}
+
+
+// TRANSFERT DE DOSSIER PAR SERVICE OU PAR FONCTION
+
+
+
+
+/**
+ * Envoyer un dossier
+ */
+public function envoyer($dossier_id = null)
+{
+    $ses = new Session();
+    $req = new Request();
+    $dossier = new Dossiers();
+    $envoiModel = new \Model\EnvoiDossiers();
+    $serviceModel = new \Model\Services();
+
+    if (!$ses->is_logged_in()) {
+        redirect('login');
+    }
+
+    $employe = $this->getEmployeInfo($ses);
+    if (!$employe) {
+        message("Profil employé non trouvé", 'error');
+        redirect('document');
+    }
+
+    if ($req->posted() && $dossier_id) {
+        $type_envoi = $req->post('type_envoi');
+        $service_dest = $req->post('service_dest');
+        $role_dest = $req->post('role_dest');
+
+        // Validation
+        if ($type_envoi == 'SERVICE' && empty($service_dest)) {
+            message("Veuillez sélectionner un service", 'error');
+            redirect('document/envoyer/' . $dossier_id);
+        }
+
+        if ($type_envoi == 'ROLE_SERVICE' && empty($role_dest)) {
+            message("Veuillez sélectionner un rôle", 'error');
+            redirect('document/envoyer/' . $dossier_id);
+        }
+
+        // Envoyer le dossier
+        $result = $envoiModel->envoyerDossier(
+            $dossier_id,
+            $type_envoi,
+            $service_dest,
+            $role_dest,
+            $employe->id
+        );
+
+        if ($result) {
+            // Marquer le dossier comme envoyé
+            $dossier->marquerCommeEnvoye($dossier_id);
+            
+            message("Dossier envoyé avec succès");
+        } else {
+            message("Ce dossier a déjà été envoyé à cette destination", 'error');
+        }
+
+        redirect('document?dossier_id=' . $dossier_id);
+    }
+
+    $data['dossier'] = $dossier->first(['id' => $dossier_id]);
+    $data['services'] = $serviceModel->findAll();
+    $data['roles'] = ['EMPLOYE', 'CHEF_SERVICE', 'ADMIN_SERVICE'];
+
+    $this->view('envoyer_dossier', $data);
+}
+
+/**
+ * Retirer un envoi de dossier
+ */
+public function retirer_envoi($envoi_id = null)
+{
+    $ses = new Session();
+    $envoiModel = new \Model\EnvoiDossiers();
+
+    if (!$ses->is_logged_in() || !$envoi_id) {
+        redirect('document');
+    }
+
+    $envoi = $envoiModel->first(['id' => $envoi_id]);
+    if ($envoi) {
+        // Vérifier que le dossier n'est pas archivé
+        $dossierModel = new Dossiers();
+        $dossier = $dossierModel->first(['id' => $envoi->dossier_id]);
+        
+        if ($dossier && !$dossier->est_archive) {
+            $envoiModel->retirerEnvoi($envoi_id);
+            message("Envoi retiré avec succès");
+        } else {
+            message("Impossible de retirer l'envoi : dossier archivé", 'error');
+        }
+    }
+
+    redirect('document');
+}
+
+/**
+ * Vérifier l'accès à un dossier - CORRIGÉ
+ */
+/**
+ * Vérifier l'accès à un dossier - Version simplifiée
+ */
+private function verifierAccesDossier($dossier_id, $employe_id, $service_id, $role_service)
+{
+    $dossierModel = new Dossiers();
+    $envoiModel = new \Model\EnvoiDossiers();
+    
+    // Vérifier d'abord si c'est un dossier interne
+    $dossierInterne = $dossierModel->first([
+        'id' => $dossier_id,
+        'service_id' => $service_id,
+        'est_envoye' => false,
+        'est_archive' => false
+    ]);
+    
+    if ($dossierInterne) {
+        return true;
+    }
+    
+    // Vérifier les envois avec une requête directe qui gère correctement les NULL
+    $query = "
+        SELECT COUNT(*) as count 
+        FROM envoidossiers ed
+        JOIN dossiers d ON ed.dossier_id = d.id
+        WHERE ed.dossier_id = :dossier_id
+        AND ed.est_actif = true
+        AND d.est_archive = false
+        AND ed.service_id = :service_id
+        AND (
+            (ed.type_envoi = 'SERVICE' AND ed.role_service IS NULL)
+            OR 
+            (ed.type_envoi = 'ROLE_SERVICE' AND ed.role_service = :role_service)
+        )
+    ";
+    
+    $result = $envoiModel->query($query, [
+        'dossier_id' => $dossier_id,
+        'service_id' => $service_id,
+        'role_service' => $role_service
+    ]);
+    
+    return ($result && $result[0]->count > 0);
+}
+
+/**
+ * Méthodes utilitaires
+ */
+private function getEmployeInfo($ses)
+{
+    $employeModel = new Employes();
+    $employe = $employeModel->first(['id' => $ses->user('id')]);
+    
+    if (!$employe) {
+        $userModel = new User();
+        $user = $userModel->first(['id' => $ses->user('id')]);
+        if ($user) {
+            $employe = $employeModel->first(['email' => $user->email]);
+        }
+    }
+    
+    return $employe;
+}
+
+private function mettreAJourEtatUtilisateur($dossier_id, $employe_id, $etat)
+{
+    $dossierModel = new Dossiers();
+    $envoiModel = new \Model\EnvoiDossiers();
+    
+    // Vérifier si c'est un dossier reçu (envoyé à un service)
+    $dossier = $dossierModel->first(['id' => $dossier_id]);
+    $employeModel = new Employes();
+    $employe = $employeModel->first(['id' => $employe_id]);
+    
+    if (!$dossier || !$employe) {
+        return false;
+    }
+    
+    // Vérifier si ce dossier a été envoyé au service de l'utilisateur
+    $envoiVersService = $envoiModel->query("
+        SELECT * FROM envoidossiers 
+        WHERE dossier_id = :dossier_id 
+        AND service_id = :service_id 
+        AND est_actif = true
+    ", [
+        'dossier_id' => $dossier_id,
+        'service_id' => $employe->service_id
+    ]);
+    
+    // Si c'est un dossier reçu par le service, ajouter tous les utilisateurs du service
+    if (!empty($envoiVersService)) {
+        $this->ajouterTousUtilisateursService($dossier_id, $employe->service_id, $employe_id, $etat);
+    } else {
+        // Sinon, comportement normal pour les dossiers internes
+        $etat_actuel = $dossierModel->query("
+            SELECT etat FROM etatdossierutilisateur 
+            WHERE dossier_id = :dossier_id AND employe_id = :employe_id
+        ", ['dossier_id' => $dossier_id, 'employe_id' => $employe_id]);
+        
+        // Ne changer l'état que s'il n'est pas déjà CLOTURE
+        if (empty($etat_actuel) || $etat_actuel[0]->etat !== 'CLOTURE') {
+            $dossierModel->mettreAJourEtat($dossier_id, $employe_id, $etat);
+        }
+    }
+}
+
+/**
+ * Ajouter tous les utilisateurs d'un service dans etatdossierutilisateur
+ */
+private function ajouterTousUtilisateursService($dossier_id, $service_id, $utilisateur_ouvrant_id, $etat)
+{
+    $dossierModel = new Dossiers();
+    
+    // Vérifier si des utilisateurs du service sont déjà dans etatdossierutilisateur
+    $utilisateursExistants = $dossierModel->query("
+        SELECT COUNT(*) as count 
+        FROM etatdossierutilisateur edu
+        JOIN employes e ON edu.employe_id = e.id
+        WHERE edu.dossier_id = :dossier_id 
+        AND e.service_id = :service_id
+    ", [
+        'dossier_id' => $dossier_id,
+        'service_id' => $service_id
+    ]);
+    
+    // Si aucun utilisateur du service n'est encore dans la table, les ajouter tous
+    if ($utilisateursExistants && $utilisateursExistants[0]->count == 0) {
+        $query = "
+            INSERT INTO etatdossierutilisateur (dossier_id, employe_id, etat)
+            SELECT :dossier_id, e.id, 'NON_OUVERT'
+            FROM employes e
+            WHERE e.service_id = :service_id 
+            AND e.est_actif = TRUE
+        ";
+        
+        $result = $dossierModel->query($query, [
+            'dossier_id' => $dossier_id,
+            'service_id' => $service_id
+        ]);
+        
+        if ($result) {
+            error_log("Tous les utilisateurs du service $service_id ajoutés dans etatdossierutilisateur pour le dossier $dossier_id");
+        }
+    }
+    
+    // Maintenant mettre à jour l'état de l'utilisateur qui ouvre le dossier
+    $etat_actuel = $dossierModel->query("
+        SELECT etat FROM etatdossierutilisateur 
+        WHERE dossier_id = :dossier_id AND employe_id = :employe_id
+    ", ['dossier_id' => $dossier_id, 'employe_id' => $utilisateur_ouvrant_id]);
+    
+    // Ne changer l'état que s'il n'est pas déjà CLOTURE
+    if (empty($etat_actuel) || $etat_actuel[0]->etat !== 'CLOTURE') {
+        $dossierModel->mettreAJourEtat($dossier_id, $utilisateur_ouvrant_id, $etat);
+    }
+}
+
+/**
+ * Marquer les notifications d'envoi de dossier comme lues
+ */
+private function marquerNotificationsEnvoiCommeLues($dossier_id, $employe_id)
+{
+    $notificationModel = new \Model\Notification();
+    
+    $query = "UPDATE Notifications 
+              SET is_read = TRUE, date_lecture = NOW()
+              WHERE dossier_id = :dossier_id 
+              AND recipient_id = :employe_id 
+              AND message LIKE '%vous a envoyé le dossier%'
+              AND is_read = FALSE";
+    
+    $result = $notificationModel->query($query, [
+        'dossier_id' => $dossier_id,
+        'employe_id' => $employe_id
+    ]);
+    
+    if ($result) {
+        error_log("Notifications d'envoi marquées comme lues pour l'employé $employe_id et le dossier $dossier_id");
+    }
+    
+    return $result;
+}
+
+/**
+ * Marquer la notification comme ouverte quand on consulte un dossier reçu
+ */
+
+
 
 
 
@@ -501,26 +1028,6 @@ protected function getEmployeIdFromSession()
 
     // Dans Controller\Document.php
 
-    public function dossier_stats($dossier_id = null)
-    {
-        $ses = new Session();
-        $req = new Request();
-        $dossierModel = new Dossiers();
-        $notificationModel = new Notification();
-
-        $data = [];
-
-        if ($dossier_id) {
-            $data['dossier'] = $dossierModel->first(['id' => $dossier_id]);
-            
-            if ($data['dossier']) {
-                $data['user_actions'] = $notificationModel->getUserActionsForDossier($dossier_id);
-                $data['dossier_id'] = $dossier_id;
-            }
-        }
-
-        $this->view('dossier_stats', $data);
-    }
 
     // Dans Controller\Document.php
     // Pour les consultations de documents

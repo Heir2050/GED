@@ -45,6 +45,16 @@
         outline: 2px solid rgba(5,150,105,0.25);
         outline-offset: 2px;
     }
+    .cloturer {
+        background-color: #D1FAE5;   /* bg-green-100 */
+        color: #065F46;             /* text-green-800 */
+        padding: 4px 12px;   /* py-1 px-2 */
+        border-radius: 0.25rem;     /* rounded */
+        font-size: 14px;         /* text-xs */
+        display: inline-block;      /* badge compact */
+        font-weight: 500;           /* lisibilité */
+    }
+
 
 </style>
 
@@ -103,12 +113,12 @@
                                     </span>
                                     
                                     <?php 
-                                    // Récupérer l'ID de l'employé connecté
-                                    $employe_id_connecte = $this->getEmployeIdFromSession();
-                                    if ($etat->employe_id == $employe_id_connecte && $etat->etat != 'CLOTURE'): 
+                                        // Récupérer l'ID de l'employé connecté
+                                        $employe_id_connecte = $this->getEmployeIdFromSession();
+                                        if ($etat->employe_id == $employe_id_connecte && $etat->etat != 'CLOTURE'): 
                                     ?>
                                         <button onclick="cloturerDossier(<?= $dossier_courant->id ?>)" 
-                                                class="px-4 py-2 bg-green-500 text-black rounded-lg hover:bg-green-600 text-sm transition-colors">
+                                                class="cloturer">
                                             Clôturer
                                         </button>
                                     <?php endif; ?>

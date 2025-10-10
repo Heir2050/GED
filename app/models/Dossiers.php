@@ -210,6 +210,71 @@ class Dossiers
         ]);
     }
 
+    // TRANSFERT DE DOSSIER PAR SERVICE OU PAR FONCTION
+
+    /**
+     * Marquer un dossier comme envoyé
+     */
+    public function marquerCommeEnvoye($dossier_id)
+    {
+        return $this->update($dossier_id, [
+            'est_envoye' => true,
+            'origine_envoi' => 'EXTERNE'
+        ]);
+    }
+
+    /**
+     * Récupérer les dossiers visibles pour un utilisateur
+     * (dossiers internes + dossiers reçus)
+     */
+    /**
+     * Récupérer les dossiers visibles pour un utilisateur avec le nombre de documents
+     */
+    public function getDossiersVisibles($employe_id, $service_id, $role_service)
+    {
+        $envoiModel = new EnvoiDossiers();
+        $documentModel = new Documents();
+        
+        $dossiersRecus = $envoiModel->getDossiersRecus($employe_id, $service_id, $role_service);
+        
+        // Dossiers internes du service
+        $dossiersInternes = $this->where([
+            'service_id' => $service_id,
+            'est_envoye' => false,
+            'est_archive' => false
+        ]);
+
+        // Fusionner les résultats et ajouter le nombre de documents
+        $dossiersVisibles = [];
+
+        // Traiter les dossiers internes
+        if ($dossiersInternes) {
+            foreach ($dossiersInternes as $dossier) {
+                $dossier->origine = 'INTERNE';
+                $dossier->nb_documents = $documentModel->query(
+                    "SELECT COUNT(*) as count FROM documents WHERE dossier_id = :dossier_id",
+                    ['dossier_id' => $dossier->id]
+                )[0]->count ?? 0;
+                $dossiersVisibles[] = $dossier;
+            }
+        }
+
+        // Traiter les dossiers reçus
+        if ($dossiersRecus) {
+            foreach ($dossiersRecus as $dossier) {
+                $dossier->origine = 'EXTERNE';
+                $dossier->nb_documents = $documentModel->query(
+                    "SELECT COUNT(*) as count FROM documents WHERE dossier_id = :dossier_id",
+                    ['dossier_id' => $dossier->id]
+                )[0]->count ?? 0;
+                $dossiersVisibles[] = $dossier;
+            }
+        }
+
+        return $dossiersVisibles;
+    }
+
+
 
 
     

@@ -5,6 +5,8 @@
     // Charger les notifications si l'utilisateur est connecté
     $notifCount = 0;
     $notifications = [];
+    $notificationsEnvoi = [];
+    $notifEnvoiCount = 0;
 
     if ($ses->is_logged_in()) {
         // Trouver l'employé correspondant à l'utilisateur
@@ -18,6 +20,23 @@
         if ($employe) {
             $notifCount = $notificationModel->getUnreadCount($employe->id);
             $notifications = $notificationModel->getUnreadNotifications($employe->id, 5);
+            
+            // Récupérer les notifications d'envoi de dossiers
+            $notificationsEnvoi = $notificationModel->query("
+                SELECT n.*, e.nom as envoyeur_nom, e.prenom as envoyeur_prenom, 
+                       d.nom as dossier_nom, s.nom as service_envoyeur_nom
+                FROM Notifications n 
+                LEFT JOIN Employes e ON n.uploader_id = e.id 
+                LEFT JOIN Dossiers d ON n.dossier_id = d.id
+                LEFT JOIN Services s ON e.service_id = s.id
+                WHERE n.recipient_id = :employe_id 
+                AND n.message LIKE '%vous a envoyé le dossier%'
+                AND n.is_read = FALSE
+                ORDER BY n.date_notification DESC
+                LIMIT 5
+            ", ['employe_id' => $employe->id]);
+            
+            $notifEnvoiCount = is_array($notificationsEnvoi) ? count($notificationsEnvoi) : 0;
         }
     }
 ?>

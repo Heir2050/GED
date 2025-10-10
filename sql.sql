@@ -70,6 +70,34 @@ CREATE TABLE EtatDossierUtilisateur (
     INDEX idx_dossier_etat (dossier_id, etat),
     INDEX idx_employe_etat (employe_id, etat)
 );
+-- Table pour gérer les envois de dossiers
+CREATE TABLE EnvoiDossiers (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    dossier_id INT NOT NULL,
+    type_envoi ENUM('SERVICE', 'ROLE_SERVICE') NOT NULL,
+    service_id INT NULL, -- Pour envoi par service
+    role_service ENUM('EMPLOYE', 'CHEF_SERVICE', 'ADMIN_SERVICE') NULL, -- Pour envoi par rôle
+    date_envoi DATETIME DEFAULT CURRENT_TIMESTAMP,
+    envoyeur_id INT NOT NULL,
+    est_actif BOOLEAN DEFAULT TRUE,
+    
+    FOREIGN KEY (dossier_id) REFERENCES Dossiers(id) ON DELETE CASCADE,
+    FOREIGN KEY (service_id) REFERENCES Services(id) ON DELETE CASCADE,
+    FOREIGN KEY (envoyeur_id) REFERENCES Employes(id) ON DELETE CASCADE,
+    
+    UNIQUE KEY unique_envoi_dossier (dossier_id, service_id, role_service),
+    
+    INDEX idx_dossier_type (dossier_id, type_envoi),
+    INDEX idx_service_role (service_id, role_service)
+);
+
+-- Ajouter une colonne pour suivre l'origine du dossier
+ALTER TABLE Dossiers 
+ADD COLUMN est_envoye BOOLEAN DEFAULT FALSE AFTER est_archive,
+ADD COLUMN origine_envoi ENUM('INTERNE', 'EXTERNE') DEFAULT 'INTERNE' AFTER est_envoye;
+
+
+
 
 -- Table des documents simplifiée
 CREATE TABLE Documents (
@@ -109,19 +137,24 @@ CREATE TABLE IF NOT EXISTS ConsultationsDocuments (
 -- Table des notifications simplifiée
 CREATE TABLE Notifications (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    document_id INT NOT NULL,
     service_id INT NOT NULL,
     uploader_id INT NOT NULL,
+    recipient_id INT NULL, -- destinataire spécifique; NULL = notification diffusée au service
+    dossier_id INT NOT NULL, -- référence le dossier concerné
     date_notification DATETIME DEFAULT CURRENT_TIMESTAMP,
     message VARCHAR(500) DEFAULT 'Nouveau document uploadé',
+    is_read tinyint(1) DEFAULT 0,
+    date_lecture DATETIME,
     
     -- Conserver les notifications même si l'uploader est supprimé
-    FOREIGN KEY (document_id) REFERENCES Documents(id) ON DELETE CASCADE,
     FOREIGN KEY (service_id) REFERENCES Services(id) ON DELETE CASCADE,
     FOREIGN KEY (uploader_id) REFERENCES Employes(id) ON DELETE NO ACTION,
+    FOREIGN KEY (recipient_id) REFERENCES Employes(id) ON DELETE CASCADE,
+    FOREIGN KEY (dossier_id) REFERENCES Dossiers(id) ON DELETE CASCADE,
     
     INDEX idx_service_date (service_id, date_notification),
-    INDEX idx_document (document_id)
+    INDEX idx_recipient (recipient_id),
+    INDEX idx_notifications_dossier_read (dossier_id, is_read)
 );
 ALTER TABLE notifications 
 ADD COLUMN employes_ayant_ouvert JSON NULL DEFAULT NULL AFTER message;
@@ -392,18 +425,80 @@ BEGIN
 END //
 DELIMITER ;
 
+
+
+-- Notification lors d'un envoi de dossier: notifie les destinataires
+DELIMITER //
+CREATE TRIGGER after_envoi_dossier_insert
+AFTER INSERT ON EnvoiDossiers
+FOR EACH ROW
+BEGIN
+	DECLARE v_dossier_nom VARCHAR(255);
+	DECLARE v_done INT DEFAULT 0;
+	DECLARE v_recipient_id INT;
+	DECLARE cur_recipients CURSOR FOR
+		-- Cas 1: envoi par service → tous les employés actifs du service destinataire
+		SELECT e.id FROM Employes e
+		WHERE NEW.type_envoi = 'SERVICE'
+		  AND e.service_id = NEW.service_id
+		  AND e.est_actif = TRUE
+		  AND e.id <> NEW.envoyeur_id
+		UNION
+		-- Cas 2: envoi par rôle → employés du service du dossier avec ce rôle
+		SELECT e2.id FROM Employes e2
+		JOIN Dossiers d2 ON d2.id = NEW.dossier_id
+		WHERE NEW.type_envoi = 'ROLE_SERVICE'
+		  AND e2.service_id = d2.service_id
+		  AND e2.role_service = NEW.role_service
+		  AND e2.est_actif = TRUE
+		  AND e2.id <> NEW.envoyeur_id;
+	DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_done = 1;
+
+	-- Nom du dossier pour le message
+	SELECT nom INTO v_dossier_nom FROM Dossiers WHERE id = NEW.dossier_id;
+
+	OPEN cur_recipients;
+	recipients_loop: LOOP
+		FETCH cur_recipients INTO v_recipient_id;
+		IF v_done = 1 THEN
+			LEAVE recipients_loop;
+		END IF;
+		INSERT INTO Notifications (dossier_id, service_id, uploader_id, recipient_id, message)
+		VALUES (
+			NEW.dossier_id,
+			COALESCE(NEW.service_id, (SELECT service_id FROM Dossiers WHERE id = NEW.dossier_id)),
+			NEW.envoyeur_id,
+			v_recipient_id,
+			CONCAT('Vous avez reçu le dossier "', v_dossier_nom, '"')
+		);
+	END LOOP;
+	CLOSE cur_recipients;
+END //
+DELIMITER ;
+
+
+
+
+
+
 -- Trigger pour créer automatiquement les entrées NotificationsConsultees quand une notification est créée
 DELIMITER //
 CREATE TRIGGER after_notification_insert
 AFTER INSERT ON Notifications
 FOR EACH ROW
 BEGIN
-    -- Créer une entrée pour chaque employé du service concerné
-    INSERT INTO NotificationsConsultees (notification_id, employe_id)
-    SELECT NEW.id, e.id
-    FROM Employes e
-    WHERE e.service_id = NEW.service_id 
-    AND e.est_actif = TRUE
-    AND e.id != NEW.uploader_id; -- Exclure celui qui a uploadé le document
+    -- Si la notification cible un destinataire précis, créer une seule entrée
+    IF NEW.recipient_id IS NOT NULL THEN
+        INSERT INTO NotificationsConsultees (notification_id, employe_id)
+        VALUES (NEW.id, NEW.recipient_id);
+    ELSE
+        -- Sinon, diffusion au service: créer pour chaque employé du service (sauf l'uploader)
+        INSERT INTO NotificationsConsultees (notification_id, employe_id)
+        SELECT NEW.id, e.id
+        FROM Employes e
+        WHERE e.service_id = NEW.service_id 
+        AND e.est_actif = TRUE
+        AND e.id != NEW.uploader_id;
+    END IF;
 END //
 DELIMITER ;

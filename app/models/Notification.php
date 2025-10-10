@@ -249,5 +249,93 @@ class Notification
             'service_id' => $service_id
         ]);
     }
+
+    /**
+     * Créer des notifications pour tous les employés d'un service quand un dossier leur est envoyé
+     */
+    public function notifierEnvoiDossier($dossier_id, $service_id, $envoyeur_id, $type_envoi, $role_service = null)
+    {
+        $employeModel = new \Model\Employes();
+        $dossierModel = new \Model\Dossiers();
+        
+        // Récupérer les informations du dossier et de l'envoyeur
+        $dossier = $dossierModel->first(['id' => $dossier_id]);
+        $envoyeur = $employeModel->first(['id' => $envoyeur_id]);
+        
+        if (!$dossier || !$envoyeur) {
+            return false;
+        }
+        
+        $envoyeur_nom = $envoyeur->prenom . ' ' . $envoyeur->nom;
+        $dossier_nom = $dossier->nom;
+        
+        // Construire le message selon le type d'envoi
+        if ($type_envoi == 'SERVICE') {
+            $message = "$envoyeur_nom vous a envoyé le dossier '$dossier_nom'";
+        } else if ($type_envoi == 'ROLE_SERVICE') {
+            $message = "$envoyeur_nom vous a envoyé le dossier '$dossier_nom' (pour votre rôle: $role_service)";
+        } else {
+            $message = "$envoyeur_nom vous a envoyé le dossier '$dossier_nom'";
+        }
+        
+        // Récupérer les employés du service destinataire
+        $where_conditions = [
+            'service_id' => $service_id,
+            'est_actif' => true
+        ];
+        
+        // Si c'est un envoi par rôle, filtrer par rôle
+        if ($type_envoi == 'ROLE_SERVICE' && $role_service) {
+            $where_conditions['role_service'] = $role_service;
+        }
+        
+        $employes = $employeModel->where($where_conditions);
+        
+        if (!$employes) {
+            return false;
+        }
+        
+        $notifications_creees = 0;
+        
+        // Créer une notification pour chaque employé du service
+        foreach ($employes as $employe) {
+            $notification_data = [
+                'dossier_id' => $dossier_id,
+                'service_id' => $service_id,
+                'uploader_id' => $envoyeur_id,
+                'recipient_id' => $employe->id,
+                'date_notification' => date('Y-m-d H:i:s'),
+                'message' => $message,
+                'is_read' => false,
+                'date_lecture' => null
+            ];
+            
+            if ($this->insert($notification_data)) {
+                $notifications_creees++;
+            }
+        }
+        
+        error_log("Notifications d'envoi de dossier créées : $notifications_creees pour le dossier $dossier_id vers le service $service_id");
+        
+        return $notifications_creees;
+    }
+
+    /**
+     * Récupérer les notifications d'envoi de dossiers pour un employé
+     */
+    public function getNotificationsEnvoiDossier($employe_id)
+    {
+        $query = "SELECT n.*, e.nom as envoyeur_nom, e.prenom as envoyeur_prenom, 
+                         d.nom as dossier_nom, s.nom as service_envoyeur_nom
+                  FROM Notifications n 
+                  LEFT JOIN Employes e ON n.uploader_id = e.id 
+                  LEFT JOIN Dossiers d ON n.dossier_id = d.id
+                  LEFT JOIN Services s ON e.service_id = s.id
+                  WHERE n.recipient_id = :employe_id 
+                  AND n.message LIKE '%vous a envoyé le dossier%'
+                  ORDER BY n.date_notification DESC";
+        
+        return $this->query($query, ['employe_id' => $employe_id]);
+    }
     
 }
