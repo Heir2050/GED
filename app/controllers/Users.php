@@ -93,6 +93,12 @@ class Users
 
                     $users->insert($arr);
 
+                    // ENREGISTRER L'ACTION
+                    $this->enregistrerAction(
+                        'CREATION_UTILISATEUR',
+                        "Création d'un nouvel utilisateur: " . $req->post('email')
+                    );
+
                     message("User added successfully");
 
                     redirect('users');
@@ -142,6 +148,12 @@ class Users
                     }
 
                     $users->update($id, $_POST, 'id');
+
+                    // ENREGISTRER L'ACTION MODIFICATION
+                    $this->enregistrerAction(
+                        'MODIFICATION_UTILISATEUR',
+                        "Modification de l'utilisateur ID: $id"
+                    );
 
                     message("User edited successfully");
 

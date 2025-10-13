@@ -224,7 +224,14 @@ INSERT INTO TypesAction (code, description) VALUES
 ('DELETE_USER', 'Désactivation d''un utilisateur'),
 ('LOGIN', 'Connexion au système'),
 ('LOGOUT', 'Déconnexion du système'),
-('NOTIFICATION_SENT', 'Envoi d''une notification');
+('NOTIFICATION_SENT', 'Envoi d''une notification'),
+('SEND_DOSSIER', 'Envoi d''un dossier'),
+('REMOVE_DOSSIER', 'Retrait d''un dossier'),
+('ARCHIVE_DOSSIER', 'Archivage d''un dossier'),
+('UNARCHIVE_DOSSIER', 'Désarchivage d''un dossier'),
+('VIEW_HISTORY', 'Consultation de l''historique'),
+('MODIFY_PROFILE', 'Modification du profil'),
+('CHANGE_PASSWORD', 'Changement de mot de passe');
 
 ALTER TABLE documents 
 ADD COLUMN taille BIGINT NOT NULL DEFAULT 0 AFTER nom_stockage,
@@ -500,5 +507,276 @@ BEGIN
         AND e.est_actif = TRUE
         AND e.id != NEW.uploader_id;
     END IF;
+END //
+DELIMITER ;
+
+-- ===========================================
+-- TRIGGERS DE TRAÇABILITÉ ET HISTORIQUE
+-- ===========================================
+
+-- Trigger pour tracer les connexions (mise à jour derniere_connexion)
+DELIMITER //
+CREATE TRIGGER after_employe_login
+AFTER UPDATE ON Employes
+FOR EACH ROW
+BEGIN
+    -- Si la dernière connexion a été mise à jour
+    IF NEW.derniere_connexion != OLD.derniere_connexion THEN
+        INSERT INTO HistoriqueActions (employe_id, type_action_id, details, date_action)
+        VALUES (
+            NEW.id,
+            (SELECT id FROM TypesAction WHERE code = 'LOGIN'),
+            CONCAT('Connexion de ', NEW.prenom, ' ', NEW.nom, ' (', NEW.email, ')'),
+            NOW()
+        );
+    END IF;
+END //
+DELIMITER ;
+
+-- Trigger pour tracer la création d'utilisateurs
+DELIMITER //
+CREATE TRIGGER after_employe_insert
+AFTER INSERT ON Employes
+FOR EACH ROW
+BEGIN
+    INSERT INTO HistoriqueActions (employe_id, type_action_id, employe_cible_id, details, date_action)
+    VALUES (
+        NEW.id, -- L'utilisateur qui a créé (sera mis à jour par l'application)
+        (SELECT id FROM TypesAction WHERE code = 'CREATE_USER'),
+        NEW.id, -- L'utilisateur créé
+        CONCAT('Création de l\'utilisateur ', NEW.prenom, ' ', NEW.nom, ' (', NEW.email, ') - Service: ', 
+               (SELECT nom FROM Services WHERE id = NEW.service_id), ' - Rôle: ', NEW.role_service),
+        NOW()
+    );
+END //
+DELIMITER ;
+
+-- Trigger pour tracer les modifications d'utilisateurs
+DELIMITER //
+CREATE TRIGGER after_employe_update
+AFTER UPDATE ON Employes
+FOR EACH ROW
+BEGIN
+    DECLARE v_changes TEXT DEFAULT '';
+    
+    -- Détecter les changements
+    IF NEW.nom != OLD.nom THEN
+        SET v_changes = CONCAT(v_changes, 'Nom: ', OLD.nom, ' → ', NEW.nom, '; ');
+    END IF;
+    
+    IF NEW.prenom != OLD.prenom THEN
+        SET v_changes = CONCAT(v_changes, 'Prénom: ', OLD.prenom, ' → ', NEW.prenom, '; ');
+    END IF;
+    
+    IF NEW.email != OLD.email THEN
+        SET v_changes = CONCAT(v_changes, 'Email: ', OLD.email, ' → ', NEW.email, '; ');
+    END IF;
+    
+    IF NEW.service_id != OLD.service_id THEN
+        SET v_changes = CONCAT(v_changes, 'Service: ', 
+            (SELECT nom FROM Services WHERE id = OLD.service_id), ' → ',
+            (SELECT nom FROM Services WHERE id = NEW.service_id), '; ');
+    END IF;
+    
+    IF NEW.role_service != OLD.role_service THEN
+        SET v_changes = CONCAT(v_changes, 'Rôle: ', OLD.role_service, ' → ', NEW.role_service, '; ');
+    END IF;
+    
+    IF NEW.est_actif != OLD.est_actif THEN
+        SET v_changes = CONCAT(v_changes, 'Statut: ', 
+            CASE WHEN OLD.est_actif THEN 'Actif' ELSE 'Inactif' END, ' → ',
+            CASE WHEN NEW.est_actif THEN 'Actif' ELSE 'Inactif' END, '; ');
+    END IF;
+    
+    -- Si des changements ont été détectés
+    IF LENGTH(v_changes) > 0 THEN
+        INSERT INTO HistoriqueActions (employe_id, type_action_id, employe_cible_id, details, date_action)
+        VALUES (
+            NEW.id, -- L'utilisateur qui a modifié (sera mis à jour par l'application)
+            (SELECT id FROM TypesAction WHERE code = 'MODIFY_USER'),
+            NEW.id, -- L'utilisateur modifié
+            CONCAT('Modification de ', NEW.prenom, ' ', NEW.nom, ': ', v_changes),
+            NOW()
+        );
+    END IF;
+END //
+DELIMITER ;
+
+-- Trigger pour tracer la désactivation d'utilisateurs
+DELIMITER //
+CREATE TRIGGER after_employe_delete
+AFTER UPDATE ON Employes
+FOR EACH ROW
+BEGIN
+    -- Si l'utilisateur a été désactivé (est_actif = FALSE et date_suppression définie)
+    IF OLD.est_actif = TRUE AND NEW.est_actif = FALSE AND NEW.date_suppression IS NOT NULL THEN
+        INSERT INTO HistoriqueActions (employe_id, type_action_id, employe_cible_id, details, date_action)
+        VALUES (
+            NEW.id, -- L'utilisateur qui a désactivé (sera mis à jour par l'application)
+            (SELECT id FROM TypesAction WHERE code = 'DELETE_USER'),
+            NEW.id, -- L'utilisateur désactivé
+            CONCAT('Désactivation de l\'utilisateur ', NEW.prenom, ' ', NEW.nom, ' (', NEW.email, ')'),
+            NOW()
+        );
+    END IF;
+END //
+DELIMITER ;
+
+-- Trigger pour tracer la création de dossiers
+DELIMITER //
+CREATE TRIGGER after_dossier_insert_trace
+AFTER INSERT ON Dossiers
+FOR EACH ROW
+BEGIN
+    INSERT INTO HistoriqueActions (employe_id, type_action_id, dossier_id, details, date_action)
+    VALUES (
+        NEW.createur_id,
+        (SELECT id FROM TypesAction WHERE code = 'CREATE_FOLDER'),
+        NEW.id,
+        CONCAT('Création du dossier "', NEW.nom, '" dans le service ',
+               COALESCE((SELECT nom FROM Services WHERE id = NEW.service_id), 'Aucun service')),
+        NOW()
+    );
+END //
+DELIMITER ;
+
+-- Trigger pour tracer l'archivage/désarchivage de dossiers
+DELIMITER //
+CREATE TRIGGER after_dossier_archive_trace
+AFTER UPDATE ON Dossiers
+FOR EACH ROW
+BEGIN
+    -- Archivage
+    IF OLD.est_archive = FALSE AND NEW.est_archive = TRUE THEN
+        INSERT INTO HistoriqueActions (employe_id, type_action_id, dossier_id, details, date_action)
+        VALUES (
+            NEW.createur_id, -- Sera mis à jour par l'application avec l'utilisateur qui archive
+            (SELECT id FROM TypesAction WHERE code = 'ARCHIVE_DOSSIER'),
+            NEW.id,
+            CONCAT('Archivage du dossier "', NEW.nom, '"'),
+            NOW()
+        );
+    END IF;
+    
+    -- Désarchivage
+    IF OLD.est_archive = TRUE AND NEW.est_archive = FALSE THEN
+        INSERT INTO HistoriqueActions (employe_id, type_action_id, dossier_id, details, date_action)
+        VALUES (
+            NEW.createur_id, -- Sera mis à jour par l'application avec l'utilisateur qui désarchive
+            (SELECT id FROM TypesAction WHERE code = 'UNARCHIVE_DOSSIER'),
+            NEW.id,
+            CONCAT('Désarchivage du dossier "', NEW.nom, '"'),
+            NOW()
+        );
+    END IF;
+END //
+DELIMITER ;
+
+-- Trigger pour tracer l'envoi de dossiers
+DELIMITER //
+CREATE TRIGGER after_envoi_dossier_insert_trace
+AFTER INSERT ON EnvoiDossiers
+FOR EACH ROW
+BEGIN
+    DECLARE v_dossier_nom VARCHAR(255);
+    DECLARE v_destinataire VARCHAR(255);
+    
+    -- Récupérer le nom du dossier
+    SELECT nom INTO v_dossier_nom FROM Dossiers WHERE id = NEW.dossier_id;
+    
+    -- Déterminer le destinataire
+    IF NEW.type_envoi = 'SERVICE' THEN
+        SET v_destinataire = CONCAT('Service: ', (SELECT nom FROM Services WHERE id = NEW.service_id));
+    ELSE
+        SET v_destinataire = CONCAT('Rôle: ', NEW.role_service, ' du service du dossier');
+    END IF;
+    
+    INSERT INTO HistoriqueActions (employe_id, type_action_id, dossier_id, details, date_action)
+    VALUES (
+        NEW.envoyeur_id,
+        (SELECT id FROM TypesAction WHERE code = 'SEND_DOSSIER'),
+        NEW.dossier_id,
+        CONCAT('Envoi du dossier "', v_dossier_nom, '" à ', v_destinataire),
+        NOW()
+    );
+END //
+DELIMITER ;
+
+-- Trigger pour tracer la suppression/désactivation d'envois de dossiers
+DELIMITER //
+CREATE TRIGGER after_envoi_dossier_update_trace
+AFTER UPDATE ON EnvoiDossiers
+FOR EACH ROW
+BEGIN
+    DECLARE v_dossier_nom VARCHAR(255);
+    DECLARE v_destinataire VARCHAR(255);
+    
+    -- Si l'envoi a été désactivé
+    IF OLD.est_actif = TRUE AND NEW.est_actif = FALSE THEN
+        -- Récupérer le nom du dossier
+        SELECT nom INTO v_dossier_nom FROM Dossiers WHERE id = NEW.dossier_id;
+        
+        -- Déterminer le destinataire
+        IF NEW.type_envoi = 'SERVICE' THEN
+            SET v_destinataire = CONCAT('Service: ', (SELECT nom FROM Services WHERE id = NEW.service_id));
+        ELSE
+            SET v_destinataire = CONCAT('Rôle: ', NEW.role_service, ' du service du dossier');
+        END IF;
+        
+        INSERT INTO HistoriqueActions (employe_id, type_action_id, dossier_id, details, date_action)
+        VALUES (
+            NEW.envoyeur_id,
+            (SELECT id FROM TypesAction WHERE code = 'REMOVE_DOSSIER'),
+            NEW.dossier_id,
+            CONCAT('Retrait de l\'envoi du dossier "', v_dossier_nom, '" à ', v_destinataire),
+            NOW()
+        );
+    END IF;
+END //
+DELIMITER ;
+
+-- Trigger pour tracer l'upload de documents
+DELIMITER //
+CREATE TRIGGER after_document_insert_trace
+AFTER INSERT ON Documents
+FOR EACH ROW
+BEGIN
+    DECLARE v_dossier_nom VARCHAR(255);
+    
+    -- Récupérer le nom du dossier
+    SELECT nom INTO v_dossier_nom FROM Dossiers WHERE id = NEW.dossier_id;
+    
+    INSERT INTO HistoriqueActions (employe_id, type_action_id, document_id, dossier_id, details, date_action)
+    VALUES (
+        NEW.uploader_id,
+        (SELECT id FROM TypesAction WHERE code = 'UPLOAD_DOC'),
+        NEW.id,
+        NEW.dossier_id,
+        CONCAT('Upload du document "', NEW.nom, '" dans le dossier "', v_dossier_nom, '"'),
+        NOW()
+    );
+END //
+DELIMITER ;
+
+-- Trigger pour tracer la suppression de documents
+DELIMITER //
+CREATE TRIGGER after_document_delete_trace
+AFTER DELETE ON Documents
+FOR EACH ROW
+BEGIN
+    DECLARE v_dossier_nom VARCHAR(255);
+    
+    -- Récupérer le nom du dossier
+    SELECT nom INTO v_dossier_nom FROM Dossiers WHERE id = OLD.dossier_id;
+    
+    INSERT INTO HistoriqueActions (employe_id, type_action_id, document_id, dossier_id, details, date_action)
+    VALUES (
+        OLD.uploader_id, -- Sera mis à jour par l'application avec l'utilisateur qui supprime
+        (SELECT id FROM TypesAction WHERE code = 'DELETE_DOC'),
+        OLD.id,
+        OLD.dossier_id,
+        CONCAT('Suppression du document "', OLD.nom, '" du dossier "', v_dossier_nom, '"'),
+        NOW()
+    );
 END //
 DELIMITER ;

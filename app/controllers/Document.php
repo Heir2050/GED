@@ -30,8 +30,13 @@ class Document
 
         $data = [];
 
-        // if (!$ses->is_logged_in()) {
-        //     redirect('login');
+        if (!$ses->is_logged_in()) {
+            redirect('login');
+        }
+
+        // Mettre à jour la dernière connexion
+        // if ($ses->is_logged_in()) {
+        //     $this->updateLastLogin($ses->user('id'));
         // }
 
         $service_id = $this->getServiceIdUtilisateur($ses);
@@ -110,12 +115,18 @@ class Document
                 }
 
                 // Chercher ou créer le dossier
+                // Chercher ou créer le dossier
                 $existingDossier = $dossier->first(['nom' => $dossierName]);
-                
+
                 if ($existingDossier) {
                     $dossierId = $existingDossier->id;
-                    $dossierPath = "uploads/documents/" . $dossierName . "/";
+                    $dossierPath = ROOTPATH . "/uploads/documents/" . $dossierName . "/";
                     $serviceId = $existingDossier->service_id;
+                    
+                    // Vérifier que le dossier physique existe
+                    if (!file_exists($dossierPath)) {
+                        mkdir($dossierPath, 0777, true);
+                    }
                 } else {
                     // Créer un nouveau dossier
                     $user_id = $ses->user('id');
@@ -136,6 +147,12 @@ class Document
                         return;
                     }
                     
+                    // Vérifier/créer le répertoire parent
+                    $parentDir = ROOTPATH . "/uploads/documents/";
+                    if (!file_exists($parentDir)) {
+                        mkdir($parentDir, 0777, true);
+                    }
+                    
                     // Créer le dossier en base
                     $dossierData = [
                         'nom' => $dossierName,
@@ -146,17 +163,25 @@ class Document
                     ];
                     
                     $dossier->insert($dossierData);
-                    
+
                     // Récupérer l'ID du dossier créé
                     $newDossier = $dossier->first(['nom' => $dossierName]);
                     $dossierId = $newDossier->id;
-                    $dossierPath = $newDossier->chemin;
+                    $dossierPath = ROOTPATH . "/" . $newDossier->chemin; // Chemin absolu
                     $serviceId = $newDossier->service_id;
                     
                     // Créer le dossier physique sur le serveur
                     if (!file_exists($dossierPath)) {
                         mkdir($dossierPath, 0777, true);
                     }
+                    
+                    // ENREGISTRER L'ACTION DE CRÉATION DE DOSSIER
+                    $this->enregistrerAction(
+                        'CREATION_DOSSIER',
+                        "Création du dossier \"{$dossierName}\"",
+                        null,
+                        $dossierId
+                    );
                 }
 
                 // TRAITEMENT DE TOUS LES FICHIERS
@@ -288,15 +313,32 @@ class Document
                 error_log("État actuel: " . print_r($etat_actuel, true));
                 
                 $result = $dossier->mettreAJourEtat($dossier_id, $employe_id, 'CLOTURE');
+
+                if ($result) {
+                    // ENREGISTRER L'ACTION DE CLÔTURE
+                    $dossier_data = $dossier->first(['id' => $dossier_id]);
+                    if ($dossier_data) {
+                        $this->enregistrerAction(
+                            'CLOTURE_DOSSIER',
+                            "Clôture du dossier \"{$dossier_data->nom}\"",
+                            null,
+                            $dossier_id
+                        );
+                    }
+                    // message("Dossier marqué comme clôturé");
+                }
+
                 error_log("Résultat mise à jour: " . ($result ? 'SUCCÈS' : 'ÉCHEC'));
                 
                 // Vérifier l'état après mise à jour
-                $etat_apres = $dossier->query("
-                    SELECT etat FROM etatdossierutilisateur 
-                    WHERE dossier_id = :dossier_id AND employe_id = :employe_id
-                ", ['dossier_id' => $dossier_id, 'employe_id' => $employe_id]);
-                
-                error_log("État après: " . print_r($etat_apres, true));
+                /*
+                    $etat_apres = $dossier->query("
+                        SELECT etat FROM etatdossierutilisateur 
+                        WHERE dossier_id = :dossier_id AND employe_id = :employe_id
+                    ", ['dossier_id' => $dossier_id, 'employe_id' => $employe_id]);
+                    
+                    error_log("État après: " . print_r($etat_apres, true));
+                */
                 
                 message("Dossier marqué comme clôturé");
             } else {
@@ -318,9 +360,21 @@ class Document
         
         if ($dossier_id && $ses->is_logged_in()) {
             if ($dossier->tousUtilisateursOntCloture($dossier_id)) {
-                $dossier->archiverDossier($dossier_id);
-                message("Dossier archivé avec succès");
-                redirect('document');
+                $dossier_data = $dossier->first(['id' => $dossier_id]);
+                
+                if ($dossier_data) {
+                    $dossier->archiverDossier($dossier_id);
+                    
+                    // ENREGISTRER L'ACTION D'ARCHIVAGE
+                    $this->enregistrerAction(
+                        'ARCHIVAGE_DOSSIER',
+                        "Archivage du dossier \"{$dossier_data->nom}\"",
+                        null,
+                        $dossier_id
+                    );
+                    
+                    message("Dossier archivé avec succès");
+                }
             } else {
                 message("Impossible d'archiver : tous les utilisateurs n'ont pas clôturé le dossier", 'error');
                 redirect('document?dossier_id=' . $dossier_id);
@@ -715,6 +769,13 @@ public function envoyer($dossier_id = null)
         redirect('document');
     }
 
+    // RÉCUPÉRER LES DONNÉES DU DOSSIER AVANT TOUT
+    $dossier_data = $dossier->first(['id' => $dossier_id]);
+    if (!$dossier_data) {
+        message("Dossier non trouvé", 'error');
+        redirect('document');
+    }
+
     if ($req->posted() && $dossier_id) {
         $type_envoi = $req->post('type_envoi');
         $service_dest = $req->post('service_dest');
@@ -744,6 +805,31 @@ public function envoyer($dossier_id = null)
             // Marquer le dossier comme envoyé
             $dossier->marquerCommeEnvoye($dossier_id);
             
+            // CORRECTION : Récupérer le nom du service destinataire pour un meilleur affichage
+            $service_dest_data = $serviceModel->first(['id' => $service_dest]);
+            $nom_service_dest = $service_dest_data ? $service_dest_data->nom : "ID: $service_dest";
+            
+            // CORRECTION : Construire le message de destination
+            if ($type_envoi == 'SERVICE') {
+                $destinataire = "Service: $nom_service_dest";
+            } else {
+                $destinataire = "Rôle: $role_dest dans Service: $nom_service_dest";
+            }
+            
+            // CORRECTION : Debug pour vérifier les données
+            error_log("Envoi dossier - Dossier: {$dossier_data->nom}, Destinataire: $destinataire, Employé: {$employe->id}");
+            
+            // ENREGISTRER L'ACTION - CORRECTION : Vérifier le résultat
+            $action_result = $this->enregistrerAction(
+                'ENVOI_DOSSIER', 
+                "Envoi du dossier \"{$dossier_data->nom}\" à $destinataire",
+                null,
+                $dossier_id
+            );
+            
+            // CORRECTION : Log du résultat de l'enregistrement
+            error_log("Résultat enregistrement action: " . ($action_result ? 'SUCCÈS' : 'ÉCHEC'));
+            
             message("Dossier envoyé avec succès");
         } else {
             message("Ce dossier a déjà été envoyé à cette destination", 'error');
@@ -752,7 +838,7 @@ public function envoyer($dossier_id = null)
         redirect('document?dossier_id=' . $dossier_id);
     }
 
-    $data['dossier'] = $dossier->first(['id' => $dossier_id]);
+    $data['dossier'] = $dossier_data; // Utiliser la variable déjà récupérée
     $data['services'] = $serviceModel->findAll();
     $data['roles'] = ['EMPLOYE', 'CHEF_SERVICE', 'ADMIN_SERVICE'];
 
@@ -779,9 +865,17 @@ public function retirer_envoi($envoi_id = null)
         
         if ($dossier && !$dossier->est_archive) {
             $envoiModel->retirerEnvoi($envoi_id);
+            
+            // Enregistrer l'action
+            $destinataire = ($envoi->type_envoi == 'SERVICE') ? "Service ID: {$envoi->service_id}" : "Rôle: {$envoi->role_service} dans Service: {$envoi->service_id}";
+            $this->enregistrerAction(
+                'RETRAIT_ENVOI_DOSSIER', 
+                "Retrait de l'envoi du dossier \"{$dossier->nom}\" à $destinataire",
+                null,
+                $dossier->id
+            );
+            
             message("Envoi retiré avec succès");
-        } else {
-            message("Impossible de retirer l'envoi : dossier archivé", 'error');
         }
     }
 
@@ -974,9 +1068,50 @@ private function marquerNotificationsEnvoiCommeLues($dossier_id, $employe_id)
     return $result;
 }
 
+
+
+// last last
 /**
- * Marquer la notification comme ouverte quand on consulte un dossier reçu
+ * Helper pour enregistrer les actions
  */
+protected function enregistrerAction($type_action, $details = '', $document_id = null, $dossier_id = null, $employe_cible_id = null)
+{
+    $ses = new Session();
+    if (!$ses->is_logged_in()) return false;
+
+    $historiqueModel = new \Model\HistoriqueActions();
+    return $historiqueModel->enregistrerAction(
+        $ses->user('id'),
+        $type_action,
+        $details,
+        $document_id,
+        $dossier_id,
+        $employe_cible_id
+    );
+}
+
+/**
+ * Mettre à jour la dernière connexion
+ */
+/**
+ * Mettre à jour la dernière connexion - Version avec requête directe
+ */
+protected function updateLastLogin($employe_id)
+{
+    $employeModel = new \Model\Employes();
+    
+    // CORRECTION : Utiliser une requête directe
+    $employeModel->query(
+        "UPDATE employes SET derniere_connexion = :derniere_connexion WHERE id = :id",
+        [
+            'derniere_connexion' => date('Y-m-d H:i:s'),
+            'id' => $employe_id
+        ]
+    );
+    
+    // Enregistrer dans l'historique
+    $this->enregistrerAction('LOGIN', 'Connexion au système');
+}
 
 
 

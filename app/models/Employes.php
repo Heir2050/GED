@@ -16,7 +16,7 @@ class Employes
 
 	protected $allowedColumns = [
 
-		'image',
+		'photo',
 		'nom',
 		'prenom',
 		'username',
@@ -24,6 +24,7 @@ class Employes
 		'password',
 		'role',
 		'created_at',
+		'derniere_connexion',
 	];
 
 	public function validate($files_data, $data, $id = null)

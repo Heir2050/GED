@@ -39,108 +39,111 @@ class Admin
         $this->view('home');
     }
 
-    // public function users($action = null, $id = null)
-    // {
-    //     $users = new User();
-    //     $req = new Request();
-    //     $ses = new Session();
-    //     $data = [];
+/*
 
-    //     $action = $data['action'] = URL(2) ?? 'View';
+    public function users($action = null, $id = null)
+    {
+        $users = new User();
+        $req = new Request();
+        $ses = new Session();
+        $data = [];
 
-    //     # After doing anything, we unsure that the user is loged in.
-    //     if (!$ses->is_logged_in() || $ses->user('role') != 'admin') {
-    //         message('Please login as admin');
-    //         redirect('login');
-    //     }
+        $action = $data['action'] = URL(2) ?? 'View';
 
-    //     // $users->setOrder_column('user_id');
+        # After doing anything, we unsure that the user is loged in.
+        if (!$ses->is_logged_in() || $ses->user('role') != 'admin') {
+            message('Please login as admin');
+            redirect('login');
+        }
 
-    //     if ($action == 'add') {
-    //         if ($req->posted()) { # if ($_SERVER['REQUEST_METHOD'] = 'POST') the same
-    //             if ($users->validate($_FILES, $_POST)) {  #$users->validate($_POST) Same code
+        // $users->setOrder_column('user_id');
 
-    //                 $file = $req->files();
+        if ($action == 'add') {
+            if ($req->posted()) { # if ($_SERVER['REQUEST_METHOD'] = 'POST') the same
+                if ($users->validate($_FILES, $_POST)) {  #$users->validate($_POST) Same code
 
-    //                 $arr = $req->post();
+                    $file = $req->files();
 
-    //                 if (!empty($file['image']['name'])) {
-    //                     $folder = "uploads/";
-    //                     if (!file_exists($folder)) {
-    //                         mkdir($folder, 0777, true);
-    //                     }
+                    $arr = $req->post();
 
-    //                     $arr['image'] = $folder . $file['image']['name'];
-    //                     move_uploaded_file($file['image']['tmp_name'], $arr['image']);
+                    if (!empty($file['image']['name'])) {
+                        $folder = "uploads/";
+                        if (!file_exists($folder)) {
+                            mkdir($folder, 0777, true);
+                        }
 
-    //                     # For resizing image 
-    //                     $image_class = new \Model\Image();
-    //                     $image_class->resize($arr['image'], 1000); # 1000 is maximum of pixel
-    //                 }
+                        $arr['image'] = $folder . $file['image']['name'];
+                        move_uploaded_file($file['image']['tmp_name'], $arr['image']);
 
-    //                 $users->insert($arr);
+                        # For resizing image 
+                        $image_class = new \Model\Image();
+                        $image_class->resize($arr['image'], 1000); # 1000 is maximum of pixel
+                    }
 
-    //                 message("Users added successfully");
+                    $users->insert($arr);
 
-    //                 redirect('users');
-    //             }
+                    message("Users added successfully");
 
-    //             $data['errors'] = $users->errors;
-    //         }
-    //     } elseif ($action == 'edit') {
-    //         $data['row'] = $users->first(['user_id' => $id]);
+                    redirect('users');
+                }
 
-    //         if (!$data['row']) {
-    //             message("User not found!");
-    //             redirect('users');
-    //         }
+                $data['errors'] = $users->errors;
+            }
+        } elseif ($action == 'edit') {
+            $data['row'] = $users->first(['user_id' => $id]);
 
-    //         if ($_SERVER['REQUEST_METHOD'] == "POST") {
+            if (!$data['row']) {
+                message("User not found!");
+                redirect('users');
+            }
 
-    //             $folder = "uploads/";
-    //             if (!file_exists($folder)) {
-    //                 mkdir($folder, 0777, true);
-    //             }
+            if ($_SERVER['REQUEST_METHOD'] == "POST") {
 
-    //             if ($users->validate($_FILES, $_POST, $id)) {
+                $folder = "uploads/";
+                if (!file_exists($folder)) {
+                    mkdir($folder, 0777, true);
+                }
 
-    //                 if (empty($_POST['password'])) {
-    //                     unset($_POST['password']);
-    //                 } else {
-    //                     $_POST['password'] = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    //                 }
+                if ($users->validate($_FILES, $_POST, $id)) {
 
-    //                 if (!empty($_FILES['image']['name'])) {
-    //                     $destination = $folder . time() . $_FILES['image']['name'];
-    //                     move_uploaded_file($_FILES['image']['tmp_name'], $destination);
+                    if (empty($_POST['password'])) {
+                        unset($_POST['password']);
+                    } else {
+                        $_POST['password'] = password_hash($_POST['password'], PASSWORD_DEFAULT);
+                    }
 
-    //                     $image_class = new Image;
-    //                     $image_class->resize($destination);
+                    if (!empty($_FILES['image']['name'])) {
+                        $destination = $folder . time() . $_FILES['image']['name'];
+                        move_uploaded_file($_FILES['image']['tmp_name'], $destination);
 
-    //                     $_POST['image'] = $destination;
+                        $image_class = new Image;
+                        $image_class->resize($destination);
 
-    //                     if (file_exists($data['row']->image)) {
-    //                         unlink($data['row']->image);
-    //                     }
-    //                 }
+                        $_POST['image'] = $destination;
 
-    //                 $users->update($id, $_POST, 'user_id');
+                        if (file_exists($data['row']->image)) {
+                            unlink($data['row']->image);
+                        }
+                    }
 
-    //                 message("User edited successfully");
+                    $users->update($id, $_POST, 'user_id');
 
-    //                 redirect('users');
-    //             } else {
-    //                 $data['errors'] = $users->errors;
-    //             }
-    //         }
-    //     }
+                    message("User edited successfully");
 
-    //     $data['total_users'] = $users->get_row("select count(*) as total from users");
+                    redirect('users');
+                } else {
+                    $data['errors'] = $users->errors;
+                }
+            }
+        }
 
-    //     $data['rows'] = $users->findAll();
+        $data['total_users'] = $users->get_row("select count(*) as total from users");
 
-    //     $this->view('users', $data);
-    // }
+        $data['rows'] = $users->findAll();
+
+        $this->view('users', $data);
+    }
+*/
 
     public function categories($action = null, $id = null)
     {

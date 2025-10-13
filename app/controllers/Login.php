@@ -37,6 +37,9 @@ class Login
 					# Everything is good
 					
 					$ses->auth($row);
+					 // Mettre à jour dernière connexion et historiser
+					 $this->updateLastLogin($row->id);
+					 
 					redirect('home');
 				}
 			}
@@ -47,5 +50,7 @@ class Login
 
 		$this->view('login', $data);
 	}
+
+	
 
 }

@@ -22,4 +22,41 @@ class FileHelper
         
         return $icons[$extension] ?? $icons['default'];
     }
+
+
+
+
+
+    /**
+	 * Helper pour enregistrer les actions
+	 */
+	protected function enregistrerAction($type_action, $details = '', $document_id = null, $dossier_id = null, $employe_cible_id = null)
+	{
+		$ses = new Session();
+		if (!$ses->is_logged_in()) return false;
+
+		$historiqueModel = new \Model\HistoriqueActions();
+		return $historiqueModel->enregistrerAction(
+			$ses->user('id'),
+			$type_action,
+			$details,
+			$document_id,
+			$dossier_id,
+			$employe_cible_id
+		);
+	}
+
+	/**
+	 * Mettre à jour la dernière connexion
+	 */
+	// protected function updateLastLogin($employe_id)
+	// {
+	// 	$employeModel = new \Model\Employes();
+	// 	$employeModel->update($employe_id, [
+	// 		'derniere_connexion' => date('Y-m-d H:i:s')
+	// 	]);
+		
+	// 	// Enregistrer dans l'historique
+	// 	$this->enregistrerAction('LOGIN', 'Connexion au système');
+	// }
 }
