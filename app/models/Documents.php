@@ -8,15 +8,16 @@ class Documents
     use Model;
 
     protected $table = 'documents';
+    protected $primaryKey = 'id';
     protected $allowedColumns = [
-        'id',
         'nom',
-        'nom_stockage',
+        'nom_stockage', 
         'dossier_id',
         'uploader_id',
         'date_upload',
         'date_modification',
-        
+        'taille',
+        'type'
     ];
 
     public function validate($files_data, $data, $id = null)

@@ -1,5 +1,7 @@
 <?php $this->view("head"); ?>
 
+
+
 <style>
     /* Styles existants conservés */
     .submission-container {
@@ -193,6 +195,7 @@
         font-size: 0.875rem;
         margin-top: 0.5rem;
     }
+    /* ... (votre CSS existant) ... */
     
     .dossier-grid {
         display: grid;
@@ -265,22 +268,22 @@
     }
 
     .send, .etat-cloture {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #ffffff;
-        background-color: #10B981;
-        border-radius: 0.5rem;
-        text-decoration: none;
+        display: inline-flex;              /* inline-flex */
+        align-items: center;               /* items-center */
+        gap: 0.5rem;                       /* gap-2 */
+        padding: 0.5rem 1rem;              /* py-2 px-4 */
+        font-size: 0.875rem;               /* text-sm */
+        font-weight: 500;                  /* font-medium */
+        color: #ffffff;                    /* text-white */
+        background-color: #10B981;         /* bg-green-500 */
+        border-radius: 0.5rem;             /* rounded-lg */
+        text-decoration: none;             /* pour les <a> */
         cursor: pointer;
-        transition: background-color 150ms ease-in-out;
+        transition: background-color 150ms ease-in-out; /* hover transition */
     }
 
     .send:hover, .etat-cloture:hover {
-        background-color: #059669;
+        background-color: #059669;         /* hover:bg-green-600 */
     }
 
     .retirer {
@@ -310,27 +313,32 @@
         cursor: pointer;
     }
 
+    
+    /* Classe utilitaire équivalente */
     .btn-green {
-        padding: 0.5rem 1.5rem;
-        background-color: #10B981;
-        color: #ffffff;
-        border-radius: 0.5rem;
-        transition: background-color 150ms ease-in-out;
+        padding: 0.5rem 1.5rem;        /* py-2 px-6 */
+        background-color: #10B981;    /* bg-green-500 */
+        color: #ffffff;               /* text-white */
+        border-radius: 0.5rem;        /* rounded-lg */
+        transition: background-color 150ms ease-in-out; /* transition-colors (durée par défaut) */
         display: inline-block;
         text-decoration: none;
         cursor: pointer;
-        border: none;
+        border: none;                 /* si c'est un <button> */
     }
 
+    /* état hover */
     .btn-green:hover {
-        background-color: #059669;
+        background-color: #059669;    /* hover:bg-green-600 */
     }
 
+    /* état focus (accessibilité) */
     .btn-green:focus {
         outline: 2px solid rgba(5,150,105,0.25);
         outline-offset: 2px;
     }
 
+    
     .etat-badge {
         padding: 4px 12px;
         border-radius: 20px;
@@ -351,6 +359,13 @@
     .btn-green.cardss {
         padding: 4px 12px;
     }
+    
+    /* .etat-cloture {
+        background: #d4edda;
+        color: #155724;
+        padding: .5rem 1rem;
+    } */
+
 </style>
 
 <main>
@@ -371,6 +386,20 @@
         </div>
     <?php endif; ?>
     <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+        <!-- Breadcrumb Start -->
+        <!-- <div x-data="{ pageName: `Documents` }" class="mb-6">
+            <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white/90" x-text="pageName">Documents</h2>
+                <nav>
+                    <button  @click="DemandeConges = true"  class="inline-flex items-center gap-2 px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600">
+                        Ajouter un Document
+                        <svg class="stroke-current" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 3.3335V12.6668M3.3335 8H12.6668" stroke="" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                    </button>
+                </nav>
+            </div>
+        </div> -->
         
         <?php if (isset($dossier_courant) && $dossier_courant->origine_envoi == 'INTERNE'): ?>
                 <!-- Affichage des documents d'un dossier spécifique -->
@@ -401,6 +430,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="mr-2">
                                     <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
                                 </svg>
+                                <!-- Voir les états des utilisateurs -->
                                 Voir les états
                             </a>
                         </div>
@@ -408,8 +438,10 @@
                 </div>
 
                 <div class="mb-4">
+                    <!-- Afficher les envois actifs -->
                     <!-- Afficher les envois actifs UNIQUEMENT pour le propriétaire -->
                     <?php 
+                        // Vérifier si l'utilisateur courant est le créateur du dossier
                         if (isset($dossier_courant) && isset($employe) && $dossier_courant->createur_id == $employe->id): 
                             $envoiModel = new \Model\EnvoiDossiers();
                             $serviceModel = new \Model\Services();
@@ -420,6 +452,7 @@
                                 <span>Envoyé à :</span>
                                 <?php foreach ($envois_actifs as $envoi): ?>
                                     <?php 
+                                        // Récupérer le nom du service
                                         $service = $serviceModel->first(['id' => $envoi->service_id]);
                                         $nom_service = $service ? $service->nom : 'Service inconnu';
                                     ?>
@@ -442,6 +475,7 @@
                         <?php if (isset($dossier_courant) && isset($employe)): ?>
                             <div class=" p-2 ">
                                 <?php 
+                                    // Vérifier l'état de l'utilisateur courant pour ce dossier
                                     $dossierModel = new \Model\Dossiers();
                                     $etat_utilisateur = $dossierModel->query(
                                         "SELECT etat FROM etatdossierutilisateur WHERE dossier_id = :dossier_id AND employe_id = :employe_id",
@@ -530,40 +564,39 @@
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                             <?php foreach ($documents as $item): ?>
                                 <?php
-                                $extension = strtolower(pathinfo($item->nom, PATHINFO_EXTENSION));
-                                $can_display_nativement = in_array($extension, ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'txt', 'csv', 'html', 'htm']);
-                                $is_word_file = in_array($extension, ['doc', 'docx']);
-                                $is_excel_file = in_array($extension, ['xls', 'xlsx']);
-                                $is_powerpoint_file = in_array($extension, ['ppt', 'pptx']);
-                                
-                                if ($can_display_nativement) {
-                                    $view_url = ROOT . '/document/visualiser/' . $item->id;
-                                    $view_text = 'Voir dans le navigateur';
-                                    $link_title = 'Ouvrir dans le navigateur';
-                                    $view_method = 'native';
-                                } elseif ($is_word_file) {
-                                    $file_url = ROOT . '/' . $dossier_courant->chemin . $item->nom_stockage;
-                                    $view_text = 'Voir le document Word';
-                                    $link_title = 'Ouvrir le document Word';
-                                    $view_method = 'word';
-                                } elseif ($is_excel_file) {
-                                    $file_url = ROOT . '/' . $dossier_courant->chemin . $item->nom_stockage;
-                                    $view_text = 'Voir le fichier Excel';
-                                    $link_title = 'Ouvrir le fichier Excel';
-                                    $view_method = 'excel';
-                                } elseif ($is_powerpoint_file) {
-                                    $view_url = ROOT . '/document/telecharger/' . $item->id;
-                                    $view_text = 'Télécharger';
-                                    $link_title = 'Télécharger le fichier';
-                                    $view_method = 'download';
-                                } else {
-                                    $view_url = ROOT . '/document/telecharger/' . $item->id;
-                                    $view_text = 'Télécharger';
-                                    $link_title = 'Télécharger le fichier';
-                                    $view_method = 'download';
-                                }
+                                    $extension = strtolower(pathinfo($item->nom, PATHINFO_EXTENSION));
+                                    $can_display_nativement = in_array($extension, ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'txt', 'csv', 'html', 'htm']);
+                                    $is_word_file = in_array($extension, ['doc', 'docx']);
+                                    $is_excel_file = in_array($extension, ['xls', 'xlsx']);
+                                    $is_powerpoint_file = in_array($extension, ['ppt', 'pptx']);
+                                    
+                                    if ($can_display_nativement) {
+                                        $view_url = ROOT . '/document/visualiser/' . $item->id;
+                                        $view_text = 'Voir dans le navigateur';
+                                        $link_title = 'Ouvrir dans le navigateur';
+                                        $view_method = 'native';
+                                    } elseif ($is_word_file) {
+                                        $file_url = ROOT . '/' . $dossier_courant->chemin . $item->nom_stockage;
+                                        $view_text = 'Voir le document Word';
+                                        $link_title = 'Ouvrir le document Word';
+                                        $view_method = 'word';
+                                    } elseif ($is_excel_file) {
+                                        $file_url = ROOT . '/' . $dossier_courant->chemin . $item->nom_stockage;
+                                        $view_text = 'Voir le fichier Excel';
+                                        $link_title = 'Ouvrir le fichier Excel';
+                                        $view_method = 'excel';
+                                    } elseif ($is_powerpoint_file) {
+                                        $view_url = ROOT . '/document/telecharger/' . $item->id;
+                                        $view_text = 'Télécharger';
+                                        $link_title = 'Télécharger le fichier';
+                                        $view_method = 'download';
+                                    } else {
+                                        $view_url = ROOT . '/document/telecharger/' . $item->id;
+                                        $view_text = 'Télécharger';
+                                        $link_title = 'Télécharger le fichier';
+                                        $view_method = 'download';
+                                    }
                                 ?>
-                                
                                 <tr>
                                     <!-- Fichier -->
                                     <td class="py-3 px-5 whitespace-nowrap sm:px-5">
@@ -573,24 +606,12 @@
                                             </div>
                                             <div>
                                                 <?php if (!empty($item->nom_stockage)): ?>
-                                                    <?php if ($view_method === 'word'): ?>
-                                                        <button onclick="openWordDocument('<?= $item->id ?>', '<?= esc($item->nom) ?>')" 
-                                                                class="text-brand-600 hover:underline text-left">
-                                                            <?= esc($item->nom) ?>
-                                                        </button>
-                                                    <?php elseif ($view_method === 'excel'): ?>
-                                                        <button onclick="openExcelDocument('<?= $item->id ?>', '<?= esc($item->nom) ?>')" 
-                                                                class="text-brand-600 hover:underline text-left">
-                                                            <?= esc($item->nom) ?>
-                                                        </button>
-                                                    <?php else: ?>
-                                                        <a href="<?= $view_url ?>" 
-                                                           target="_blank" 
-                                                           class="text-brand-600 hover:underline"
-                                                           title="<?= $link_title ?>">
-                                                            <?= esc($item->nom) ?>
-                                                        </a>
-                                                    <?php endif; ?>
+                                                    <a href="<?= $view_url ?>" 
+                                                       target="_blank" 
+                                                       class="text-brand-600 hover:underline"
+                                                       title="<?= $can_display_natively ? 'Voir dans le navigateur' : ($is_office_file ? 'Voir avec Google Docs' : 'Télécharger') ?>">
+                                                        <?= esc($item->nom) ?>
+                                                    </a>
                                                 <?php else: ?>
                                                     <span class="text-gray-400">Aucun fichier</span>
                                                 <?php endif; ?>
@@ -602,13 +623,6 @@
                                     <td class="px-5 py-3 whitespace-nowrap sm:px-6">
                                         <span class="block text-sm">
                                             <?= !empty($item->type) ? esc($item->type) : strtoupper($extension) ?>
-                                            <?php if ($is_word_file): ?>
-                                                <span class="text-xs text-blue-500">(Word)</span>
-                                            <?php elseif ($is_excel_file): ?>
-                                                <span class="text-xs text-green-500">(Excel)</span>
-                                            <?php elseif ($is_powerpoint_file): ?>
-                                                <span class="text-xs text-orange-500">(PowerPoint)</span>
-                                            <?php endif; ?>
                                         </span>
                                     </td>
 
@@ -623,21 +637,27 @@
                                     <td class="px-5 py-3 whitespace-nowrap sm:px-6">
                                         <span class="block text-sm"><?= date('d/m/Y H:i', strtotime($item->date_upload)) ?></span>
                                     </td>
+
+                                    <!-- <button @click="open = !open" class="text-gray-500 dark:text-gray-400">
+                                        <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M5.99902 10.245C6.96552 10.245 7.74902 11.0285 7.74902 11.995V12.005C7.74902 12.9715 6.96552 13.755 5.99902 13.755C5.03253 13.755 4.24902 12.9715 4.24902 12.005V11.995C4.24902 11.0285 5.03253 10.245 5.99902 10.245ZM17.999 10.245C18.9655 10.245 19.749 11.0285 19.749 11.995V12.005C19.749 12.9715 18.9655 13.755 17.999 13.755C17.0325 13.755 16.249 12.9715 16.249 12.005V11.995C16.249 11.0285 17.0325 10.245 17.999 10.245ZM13.749 11.995C13.749 11.0285 12.9655 10.245 11.999 10.245C11.0325 10.245 10.249 11.0285 10.249 11.995V12.005C10.249 12.9715 11.0325 13.755 11.999 13.755C12.9655 13.755 13.749 12.9715 13.749 12.005V11.995Z" fill=""></path>
+                                        </svg>
+                                    </button> -->
                                     
                                     <!-- Colonne Actions -->
                                     <td class="px-5 py-3 whitespace-nowrap sm:px-6">
                                         <div x-data="{ open: false }" class="relative">
                                             <button @click="open = !open" class="text-gray-500 dark:text-gray-400">
+                                                <!-- Icône menu -->
                                                 <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                     <path fill-rule="evenodd" clip-rule="evenodd" d="M5.99902 10.245C6.96552 10.245 7.74902 11.0285 7.74902 11.995V12.005C7.74902 12.9715 6.96552 13.755 5.99902 13.755C5.03253 13.755 4.24902 12.9715 4.24902 12.005V11.995C4.24902 11.0285 5.03253 10.245 5.99902 10.245ZM17.999 10.245C18.9655 10.245 19.749 11.0285 19.749 11.995V12.005C19.749 12.9715 18.9655 13.755 17.999 13.755C17.0325 13.755 16.249 12.9715 16.249 12.005V11.995C16.249 11.0285 17.0325 10.245 17.999 10.245ZM13.749 11.995C13.749 11.0285 12.9655 10.245 11.999 10.245C11.0325 10.245 10.249 11.0285 10.249 11.995V12.005C10.249 12.9715 11.0325 13.755 11.999 13.755C12.9655 13.755 13.749 12.9715 13.749 12.005V11.995Z" fill=""></path>
                                                 </svg>
                                             </button>
                                             
-                                            <!-- Menu déroulant -->
                                             <div x-show="open" @click.outside="open = false" class="shadow-theme-lg dark:bg-gray-dark fixed w-40 space-y-1 rounded-2xl border border-gray-200 bg-white p-2 dark:border-gray-800" style="position: absolute; top: 20px; right: 0; z-index: 999;">
                                                 <?php if ($view_method === 'word'): ?>
-                                                    <button onclick="openWordDocument('<?= $item->id ?>', '<?= esc($item->nom) ?>')" 
-                                                        class="text-theme-xs flex w-full rounded-lg px-3 py-2 text-left font-medium text-gray-500 hover:bg-gray-100">
+                                                    <button onclick="openWordDocument('<?= ROOT . '/' . $dossier_courant->chemin . $item->nom_stockage ?>', '<?= esc($item->nom) ?>')" 
+                                                            class="text-theme-xs flex w-full rounded-lg px-3 py-2 text-left font-medium text-gray-500 hover:bg-gray-100">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"></path>
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -645,8 +665,8 @@
                                                         Voir le document
                                                     </button>
                                                 <?php elseif ($view_method === 'excel'): ?>
-                                                    <button onclick="openExcelDocument('<?= $item->id ?>', '<?= esc($item->nom) ?>')" 
-                                                        class="text-theme-xs flex w-full rounded-lg px-3 py-2 text-left font-medium text-gray-500 hover:bg-gray-100">
+                                                    <button onclick="openExcelDocument('<?= ROOT . '/' . $dossier_courant->chemin . $item->nom_stockage ?>', '<?= esc($item->nom) ?>')" 
+                                                            class="text-theme-xs flex w-full rounded-lg px-3 py-2 text-left font-medium text-gray-500 hover:bg-gray-100">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"></path>
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -655,8 +675,8 @@
                                                     </button>
                                                 <?php elseif ($view_method === 'native'): ?>
                                                     <a href="<?= $view_url ?>" 
-                                                       target="_blank" 
-                                                       class="text-theme-xs flex w-full rounded-lg px-3 py-2 text-left font-medium text-gray-500 hover:bg-gray-100">
+                                                    target="_blank" 
+                                                    class="text-theme-xs flex w-full rounded-lg px-3 py-2 text-left font-medium text-gray-500 hover:bg-gray-100">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"></path>
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -666,7 +686,7 @@
                                                 <?php endif; ?>
                                                 
                                                 <a href="<?= ROOT ?>/document/telecharger/<?= $item->id ?>" 
-                                                   class="text-theme-xs flex w-full rounded-lg px-3 py-2 text-left font-medium text-gray-500 hover:bg-gray-100">
+                                                class="text-theme-xs flex w-full rounded-lg px-3 py-2 text-left font-medium text-gray-500 hover:bg-gray-100">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
                                                     </svg>
@@ -716,6 +736,7 @@
 
                                     <!-- État du dossier -->
                                     <?php
+                                        // Récupérer l'état du dossier pour l'utilisateur courant
                                         $dossierModel = new \Model\Dossiers();
                                         $etat_utilisateur = $dossierModel->query(
                                             "SELECT etat FROM etatdossierutilisateur WHERE dossier_id = :dossier_id AND employe_id = :employe_id",
@@ -739,6 +760,8 @@
                                 </div>
 
                                 <div class="dossier-name"><?= esc($dossier_item->nom) ?></div>
+                                
+                                
                                 
                                 <div class="dossier-info">
                                     <div class="document-count">
@@ -768,237 +791,287 @@
     </div>
 </main>
 
-<!-- Modal for d'ajout d'un document -->
-<div x-show="DemandeConges" class="fixed inset-0 flex items-center justify-center p-5 overflow-y-auto z-99999">
-    <div class="modal-close-btn fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px]"></div>
-    <div class="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
-        <!-- close btn -->
-        <button @click="DemandeConges = false" class="transition-color absolute right-5 top-5 z-999 flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:bg-gray-700 dark:bg-white/[0.05] dark:text-gray-400 dark:hover:bg-white/[0.07] dark:hover:text-gray-300">
-            <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd" clip-rule="evenodd" d="M6.04289 16.5418C5.65237 16.9323 5.65237 17.5655 6.04289 17.956C6.43342 18.3465 7.06658 18.3465 7.45711 17.956L11.9987 13.4144L16.5408 17.9565C16.9313 18.347 17.5645 18.347 17.955 17.9565C18.3455 17.566 18.3455 16.9328 17.955 16.5423L13.4129 12.0002L17.955 7.45808C18.3455 7.06756 18.3455 6.43439 17.955 6.04387C17.5645 5.65335 16.9313 5.65335 16.5408 6.04387L11.9987 10.586L7.45711 6.04439C7.06658 5.65386 6.43342 5.65386 6.04289 6.04439C5.65237 6.43491 5.65237 7.06808 6.04289 7.4586L10.5845 12.0002L6.04289 16.5418Z" fill="" />
-            </svg>
-        </button>
-        <div class="pr-14">
-            <h4 class="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-                Ajouter un nouveau document
-            </h4>
-            <p class="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-                Téléversez un document et spécifiez son dossier
-            </p>
+<!-- Modal pour Word -->
+<div id="wordModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg w-11/12 h-5/6 max-w-6xl flex flex-col">
+        <div class="flex justify-between items-center p-4 border-b">
+            <h3 id="wordModalTitle" class="text-lg font-semibold">Document Word</h3>
+            <div class="flex gap-2">
+                <button id="wordDownloadBtn" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+                    Télécharger
+                </button>
+                <button onclick="closeWordViewer()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
-        <form method="post" action="<?= ROOT ?>/document" enctype="multipart/form-data">
-            <div class="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2 mb-6">
-                <div class="col-span-2">
-                    <div class="submission-container">
-                        <div class="form-group file-upload-group">
-                            <div class="file-upload-area" id="fileUploadArea">
-                                <input type="file" id="fileInput" name="files[]" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.txt,.csv,.html,.htm">
-                                <label for="fileInput" class="file-upload-label">
-                                    <div class="file-icon-svg" id="defaultFileIcon">
-                                        <svg viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>
-                                    </div>
-                                    <span id="fileLabelText">Glissez-déposez vos fichiers ou cliquez pour sélectionner</span>
-                                    <span class="file-requirements">(Formats acceptés: JPG, PNG, PDF, DOC, XLS, PPT, TXT, CSV, HTML, ZIP - Max 10MB par fichier)</span>
-                                </label>
-                                <div class="file-preview" id="filePreview"></div>
-                                <div class="files-count" id="filesCount">Aucun fichier sélectionné</div>
-                                <div class="upload-status" id="uploadStatus"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-span-2">
-                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                        Nom du dossier
-                    </label>
-                    <input type="text" name="dossier_name" placeholder="Nom du dossier (ex: Factures, Contrats, etc.)" class="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800">
-                    <p class="text-theme-xs text-error-500 mt-1.5"></p>
+        <div class="p-4 flex-1 overflow-auto">
+            <div id="wordContent" class="prose max-w-none">
+                <div class="text-center py-8">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p class="mt-4 text-gray-600">Chargement du document...</p>
                 </div>
             </div>
-
-            <div class="flex justify-end gap-3">
-                <button type="button" @click="DemandeConges = false" class="flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] sm:w-auto">Annuler</button>
-                <button type="submit" class="flex w-full justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 sm:w-auto">Téléverser le document</button>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
+<!-- Modal pour Excel -->
+<div id="excelModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg w-11/12 h-5/6 max-w-6xl flex flex-col">
+        <div class="flex justify-between items-center p-4 border-b">
+            <h3 id="excelModalTitle" class="text-lg font-semibold">Fichier Excel</h3>
+            <div class="flex gap-2">
+                <button id="excelDownloadBtn" class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+                    Télécharger
+                </button>
+                <button onclick="closeExcelViewer()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="p-4 flex-1 overflow-auto">
+            <div id="excelContent">
+                <div class="text-center py-8">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+                    <p class="mt-4 text-gray-600">Chargement du fichier Excel...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
+// Variables globales
+let currentDocumentUrl = '';
+
 // ========== FONCTIONS POUR WORD ==========
-// ========== FONCTIONS POUR WORD ==========
-function openWordDocument(documentId, filename) {
-    const fileUrl = '<?= ROOT ?>/document/servir_fichier/' + documentId;
-    const features = 'width=1200,height=800,scrollbars=yes,resizable=yes,left=100,top=100';
-    const newWindow = window.open('', `word_${Date.now()}`, features);
-
-    newWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>${filename} - Word Viewer</title>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"><\/script>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f8fafc; }
-                .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-                .content { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); line-height: 1.6; min-height: 400px; }
-                table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-                table, th, td { border: 1px solid #ddd; padding: 8px; }
-                .loading { text-align: center; padding: 50px; color: #6b7280; }
-                .error { text-align: center; padding: 50px; color: #ef4444; }
-                .close-btn { padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
-                .download-btn { padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; margin-right: 10px; }
-                .spinner { border: 4px solid #f3f4f6; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1 style="margin: 0; color: #1f2937;">📄 ${filename}</h1>
-                <div>
-                    <button class="download-btn" onclick="window.open('${fileUrl}')">📥 Télécharger</button>
-                    <button class="close-btn" onclick="window.close()">✕ Fermer</button>
-                </div>
-            </div>
-            <div id="content" class="loading">
-                <div class="spinner"></div>
-                <p>Chargement du document Word...</p>
-            </div>
-            <script>
-                console.log('Début du chargement Word...');
-                loadWordDocument('${fileUrl}');
-
-                async function loadWordDocument(fileUrl) {
-                    try {
-                        console.log('Tentative de chargement:', fileUrl);
-                        const response = await fetch(fileUrl);
-                        if (!response.ok) throw new Error('Erreur HTTP: ' + response.status);
-
-                        const arrayBuffer = await response.arrayBuffer();
-                        console.log('Fichier chargé, conversion en cours...');
-
-                        const result = await mammoth.convertToHtml({ arrayBuffer });
-                        console.log('Conversion réussie');
-
-                        document.getElementById('content').innerHTML = 
-                            '<div class="content">' + result.value + '</div>';
-                    } catch (error) {
-                        console.error('Erreur:', error);
-                        document.getElementById('content').innerHTML = \`
-                            <div class="error">
-                                <h3>❌ Erreur de chargement</h3>
-                                <p>Impossible d'afficher le document Word.</p>
-                                <small>\${error.message}</small><br><br>
-                                <button class="download-btn" onclick="window.open('\${fileUrl}')">📥 Télécharger le document</button>
-                            </div>
-                        \`;
-                    }
-                }
-            <\/script>
-        </body>
-        </html>
-    `);
+function openWordDocument(fileUrl, filename) {
+    currentDocumentUrl = fileUrl;
+    document.getElementById('wordModalTitle').textContent = filename;
+    document.getElementById('wordModal').classList.remove('hidden');
+    document.getElementById('wordDownloadBtn').onclick = function() {
+        window.open(fileUrl, '_blank');
+    };
+    
+    loadWordDocument(fileUrl);
 }
 
-
-// ========== FONCTIONS POUR EXCEL ==========
-// ========== FONCTIONS POUR EXCEL ==========
-function openExcelDocument(documentId, filename) {
-    const fileUrl = '<?= ROOT ?>/document/servir_fichier/' + documentId;
-    const features = 'width=1400,height=800,scrollbars=yes,resizable=yes,left=100,top=100';
-    const newWindow = window.open('', `excel_${Date.now()}`, features);
-
-    newWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>${filename} - Excel Viewer</title>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f8fafc; }
-                .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-                .sheet { margin-bottom: 30px; background: white; padding: 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden; }
-                .sheet-title { background: #10b981; color: white; padding: 15px; margin: 0; font-weight: bold; font-size: 16px; }
-                table { border-collapse: collapse; width: 100%; font-size: 14px; }
-                th { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; font-weight: 600; text-align: left; }
-                td { border: 1px solid #e2e8f0; padding: 10px; min-width: 80px; }
-                tr:nth-child(even) { background: #f8fafc; }
-                .loading { text-align: center; padding: 50px; color: #6b7280; }
-                .error { text-align: center; padding: 50px; color: #ef4444; }
-                .close-btn { padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
-                .download-btn { padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; margin-right: 10px; }
-                .spinner { border: 4px solid #f3f4f6; border-top: 4px solid #10b981; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1 style="margin: 0; color: #1f2937;">📊 ${filename}</h1>
-                <div>
-                    <button class="download-btn" onclick="window.open('${fileUrl}')">📥 Télécharger</button>
-                    <button class="close-btn" onclick="window.close()">✕ Fermer</button>
-                </div>
-            </div>
-            <div id="content" class="loading">
-                <div class="spinner"></div>
-                <p>Chargement du fichier Excel...</p>
-            </div>
-
-            <script>
-                console.log('Début du chargement Excel...');
-                loadExcelDocument('${fileUrl}');
-
-                async function loadExcelDocument(fileUrl) {
-                    try {
-                        console.log('Tentative de chargement:', fileUrl);
-                        const response = await fetch(fileUrl);
-                        if (!response.ok) throw new Error('Erreur HTTP: ' + response.status);
-
-                        const arrayBuffer = await response.arrayBuffer();
-                        console.log('Fichier chargé, traitement en cours...');
-
-                        const data = new Uint8Array(arrayBuffer);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        console.log('Fichier Excel chargé avec', workbook.SheetNames.length, 'feuilles.');
-
-                        let html = '';
-                        workbook.SheetNames.forEach(sheetName => {
-                            const worksheet = workbook.Sheets[sheetName];
-                            const sheetHtml = XLSX.utils.sheet_to_html(worksheet, {
-                                editable: false,
-                                header: '',
-                                raw: true
-                            });
-                            html += \`
-                                <div class="sheet">
-                                    <div class="sheet-title">📊 \${sheetName}</div>
-                                    <div style="overflow-x:auto; padding:20px;">\${sheetHtml}</div>
-                                </div>\`;
-                        });
-
-                        document.getElementById('content').innerHTML = html;
-                        console.log('Affichage terminé avec succès.');
-
-                    } catch (error) {
-                        console.error('Erreur:', error);
-                        document.getElementById('content').innerHTML = \`
-                            <div class="error">
-                                <h3>❌ Erreur de chargement</h3>
-                                <p>Impossible d'afficher le fichier Excel.</p>
-                                <small>\${error.message}</small><br><br>
-                                <button class="download-btn" onclick="window.open('\${fileUrl}')">📥 Télécharger le fichier</button>
-                            </div>
-                        \`;
-                    }
-                }
-            <\/script>
-        </body>
-        </html>
-    `);
+function closeWordViewer() {
+    document.getElementById('wordModal').classList.add('hidden');
+    document.getElementById('wordContent').innerHTML = `
+        <div class="text-center py-8">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p class="mt-4 text-gray-600">Chargement du document...</p>
+        </div>
+    `;
 }
 
-// ========== FONCTIONS UTILITAIRES ==========
+async function loadWordDocument(fileUrl) {
+    try {
+        const arrayBuffer = await fetch(fileUrl).then(response => {
+            if (!response.ok) throw new Error('Erreur de chargement');
+            return response.arrayBuffer();
+        });
+        
+        const result = await mammoth.convertToHtml({arrayBuffer: arrayBuffer});
+        
+        document.getElementById('wordContent').innerHTML = `
+            <div class="bg-white p-6 rounded-lg border">
+                ${result.value}
+            </div>
+            ${result.messages.length > 0 ? `
+                <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
+                    <p class="text-sm text-yellow-800">
+                        Note : Certains éléments du document peuvent ne pas s'afficher correctement.
+                    </p>
+                </div>
+            ` : ''}
+        `;
+        
+    } catch (error) {
+        showError('wordContent', fileUrl, error);
+    }
+}
+
+// ========== FONCTIONS POUR EXCEL ==========
+function openExcelDocument(fileUrl, filename) {
+    currentDocumentUrl = fileUrl;
+    document.getElementById('excelModalTitle').textContent = filename;
+    document.getElementById('excelModal').classList.remove('hidden');
+    document.getElementById('excelDownloadBtn').onclick = function() {
+        window.open(fileUrl, '_blank');
+    };
+    
+    loadExcelDocument(fileUrl);
+}
+
+function closeExcelViewer() {
+    document.getElementById('excelModal').classList.add('hidden');
+    document.getElementById('excelContent').innerHTML = `
+        <div class="text-center py-8">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+            <p class="mt-4 text-gray-600">Chargement du fichier Excel...</p>
+        </div>
+    `;
+}
+
+async function loadExcelDocument(fileUrl) {
+    try {
+        const arrayBuffer = await fetch(fileUrl).then(response => {
+            if (!response.ok) throw new Error('Erreur de chargement');
+            return response.arrayBuffer();
+        });
+        
+        // Lire le fichier Excel
+        const data = new Uint8Array(arrayBuffer);
+        const workbook = XLSX.read(data, {type: 'array'});
+        
+        let htmlContent = '';
+        
+        // Parcourir toutes les feuilles
+        workbook.SheetNames.forEach((sheetName, index) => {
+            const worksheet = workbook.Sheets[sheetName];
+            const html = XLSX.utils.sheet_to_html(worksheet, {
+                id: `sheet-${index}`,
+                editable: false,
+                header: ''
+            });
+            
+            htmlContent += `
+                <div class="mb-8">
+                    <h4 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">
+                        📊 Feuille : ${sheetName}
+                    </h4>
+                    <div class="overflow-x-auto">
+                        ${html}
+                    </div>
+                </div>
+            `;
+        });
+        
+        document.getElementById('excelContent').innerHTML = `
+            <div class="bg-white">
+                ${htmlContent}
+            </div>
+            <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
+                <p class="text-sm text-blue-800">
+                    💡 <strong>Information :</strong> Le fichier Excel contient ${workbook.SheetNames.length} feuille(s).
+                    Les formules et graphiques ne sont pas affichés.
+                </p>
+            </div>
+        `;
+        
+    } catch (error) {
+        showError('excelContent', fileUrl, error);
+    }
+}
+
+// ========== FONCTION D'ERREUR COMMUNE ==========
+function showError(containerId, fileUrl, error) {
+    document.getElementById(containerId).innerHTML = `
+        <div class="text-center py-8 text-red-600">
+            <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+            </svg>
+            <h3 class="text-lg font-semibold mb-2">Erreur de chargement</h3>
+            <p>Impossible d'afficher le document. Veuillez le télécharger pour le visualiser.</p>
+            <button onclick="window.open('${fileUrl}', '_blank')" 
+                    class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Télécharger le document
+            </button>
+        </div>
+    `;
+    console.error('Erreur:', error);
+}
+
+// ========== GESTION DES ÉVÉNEMENTS ==========
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeWordViewer();
+        closeExcelViewer();
+    }
+});
+
+// Fermer en cliquant en dehors
+document.getElementById('wordModal').addEventListener('click', function(e) {
+    if (e.target === this) closeWordViewer();
+});
+
+document.getElementById('excelModal').addEventListener('click', function(e) {
+    if (e.target === this) closeExcelViewer();
+});
+</script>
+
+<style>
+/* Styles pour Word */
+.prose {
+    max-width: none;
+    line-height: 1.6;
+}
+
+.prose p {
+    margin-bottom: 1em;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    font-weight: bold;
+}
+
+.prose table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+}
+
+.prose table, .prose th, .prose td {
+    border: 1px solid #e5e7eb;
+    padding: 0.5em;
+}
+
+/* Styles pour Excel */
+#excelContent table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.5em 0;
+    font-size: 0.875rem;
+}
+
+#excelContent th {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 0.5em;
+    font-weight: 600;
+    text-align: left;
+}
+
+#excelContent td {
+    border: 1px solid #e2e8f0;
+    padding: 0.5em;
+    min-width: 80px;
+}
+
+#excelContent tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+#excelContent tr:hover {
+    background-color: #f1f5f9;
+}
+</style>
+
+
+
+<!-- Cloturer un dossier -->
+<script>
 function cloturerDossier(dossierId) {
     if (confirm('Êtes-vous sûr de vouloir clôturer ce dossier ? Cette action est définitive.')) {
         window.location.href = '<?= ROOT ?>/document/cloturer_dossier/' + dossierId;
@@ -1010,14 +1083,41 @@ function archiverDossier(dossierId) {
         window.location.href = '<?= ROOT ?>/document/archiver_dossier/' + dossierId;
     }
 }
+</script>
 
-function formatFileSize(bytes) {
-    if (bytes === 0 || bytes === undefined) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
+<!-- Fonctions utilitaires -->
+<script>
+    function formatFileSize(bytes) {
+        if (bytes === 0 || bytes === undefined) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+</script>
+
+<script>
+    function cloturerDossier(dossierId) {
+        if (confirm('Êtes-vous sûr de vouloir clôturer ce dossier ? Cette action est définitive.')) {
+            window.location.href = '<?= ROOT ?>/document/cloturer_dossier/' + dossierId;
+        }
+    }
+
+    function archiverDossier(dossierId) {
+        if (confirm('Êtes-vous sûr de vouloir archiver ce dossier ? Il ne sera plus visible dans la liste principale.')) {
+            window.location.href = '<?= ROOT ?>/document/archiver_dossier/' + dossierId;
+        }
+    }
+
+    // Fonction helper pour les labels d'état
+    function getEtatLabel(etat) {
+        const labels = {
+            'NON_OUVERT': 'Non ouvert',
+            'TRAITEMENT': 'En traitement', 
+            'CLOTURE': 'Clôturé'
+        };
+        return labels[etat] || etat;
+    }
 </script>
 
 <?php $this->view("footer"); ?>

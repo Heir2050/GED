@@ -84,7 +84,7 @@
                                         Connexion precedente
                                     </p>
                                     <p class="text-sm font-medium text-gray-800 dark:text-white/90" >
-                                        Date connexion
+                                        <?= esc($row->derniere_connexion ?? '') ?>
                                     </p>
                                 </div>
                             </div>

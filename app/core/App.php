@@ -32,7 +32,10 @@ class App
 			$this->controller = "_404";
 		}
 
-		$controller = new ('\Controller\\'.$this->controller);
+		$controller_class = new ('\Controller\\'.$this->controller);
+
+		// ajout pour la visualisations de document
+		$controller = new $controller_class();
 
 		/** select method **/
 		if(!empty($URL[1]))

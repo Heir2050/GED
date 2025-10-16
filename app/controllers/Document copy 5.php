@@ -794,6 +794,9 @@ public function envoyer($dossier_id = null)
             }
         }
 
+        // Appeler la méthode debug
+        $envoiModel->debugTable();
+
         // CORRECTION : S'assurer que service_id n'est jamais null
         if ($type_envoi == 'ROLE_SERVICE' && !empty($service_dest)) {
             // Envoyer le dossier
@@ -1259,65 +1262,6 @@ private function getMimeTypeForDisplay($file_path, $filename)
     
     // Fallback
     return 'application/octet-stream';
-}
-
-
-
-/**
- * Servir le fichier pour la visualisation dans une nouvelle fenêtre
- */
-public function servir_fichier($document_id = null)
-{
-    $ses = new Session();
-    $document = new Documents();
-    $dossier = new Dossiers();
-    
-    if (!$ses->is_logged_in() || !$document_id) {
-        http_response_code(403);
-        exit('Accès non autorisé');
-    }
-    
-    // Récupérer le document
-    $doc = $document->first(['id' => $document_id]);
-    if (!$doc) {
-        http_response_code(404);
-        exit('Document non trouvé');
-    }
-    
-    // Récupérer le dossier
-    $dossier_data = $dossier->first(['id' => $doc->dossier_id]);
-    if (!$dossier_data) {
-        http_response_code(404);
-        exit('Dossier non trouvé');
-    }
-    
-    // Vérifier l'accès
-    $employe = $this->getEmployeInfo($ses);
-    if (!$employe) {
-        http_response_code(403);
-        exit('Profil employé non trouvé');
-    }
-    
-    $accesAutorise = $this->verifierAccesDossier($doc->dossier_id, $employe->id, $employe->service_id, $employe->role_service);
-    if (!$accesAutorise) {
-        http_response_code(403);
-        exit('Accès non autorisé à ce document');
-    }
-    
-    // Chemin complet du fichier
-    $file_path = ROOTPATH . '/' . $dossier_data->chemin . $doc->nom_stockage;
-    
-    if (!file_exists($file_path)) {
-        http_response_code(404);
-        exit('Fichier non trouvé sur le serveur');
-    }
-    
-    // Servir le fichier
-    header('Content-Type: application/octet-stream');
-    header('Content-Disposition: attachment; filename="' . $doc->nom . '"');
-    header('Content-Length: ' . filesize($file_path));
-    readfile($file_path);
-    exit;
 }
 
 

@@ -37,38 +37,48 @@ class EnvoiDossiers
             AND service_id = :service_id 
             AND est_actif = true
         ";
+        
         $params = [
             'dossier_id' => $dossier_id,
             'type_envoi' => $type_envoi,
             'service_id' => $service_id
         ];
+        
+        // CORRECTION : Ajouter la condition pour le rôle selon le type d'envoi
         if ($type_envoi == 'ROLE_SERVICE') {
             $query .= " AND role_service = :role_service";
             $params['role_service'] = $role_service;
         } else {
             $query .= " AND role_service IS NULL";
         }
+        
         $result = $this->query($query, $params);
+        
         if ($result && $result[0]->count > 0) {
             error_log("Envoi déjà existant - Dossier: $dossier_id, Type: $type_envoi, Service: $service_id, Rôle: " . ($role_service ?? 'NULL'));
             return false;
         }
+        
+        // Créer l'envoi
         $data = [
             'dossier_id' => $dossier_id,
             'type_envoi' => $type_envoi,
             'service_id' => $service_id,
-            'role_service' => ($type_envoi == 'ROLE_SERVICE') ? $role_service : null,
+            'role_service' => ($type_envoi == 'SERVICE') ? null : $role_service,
             'envoyeur_id' => $envoyeur_id,
             'date_envoi' => date('Y-m-d H:i:s'),
             'est_actif' => true
         ];
+        
         $insertResult = $this->insert($data);
+        
         if ($insertResult) {
             error_log("Envoi créé avec succès - Dossier: $dossier_id, Type: $type_envoi, Service: $service_id, Rôle: " . ($role_service ?? 'NULL'));
+            
+            // Ajouter automatiquement les utilisateurs du service destinataire dans etatdossierutilisateur
             $this->ajouterUtilisateursServiceDestinataire($dossier_id, $service_id, $type_envoi, $role_service);
-        } else {
-            error_log("Erreur lors de l'insertion dans envoidossiers");
         }
+        
         return $insertResult;
     }
 

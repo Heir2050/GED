@@ -337,6 +337,18 @@ if (!function_exists('getFileIcon')) {
 }
 
 
+
+function formatFileSize($bytes, $decimals = 2) {
+    if ($bytes == 0) return '0 Bytes';
+    
+    $k = 1024;
+    $sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    $i = floor(log($bytes) / log($k));
+    
+    return number_format($bytes / pow($k, $i), $decimals) . ' ' . $sizes[$i];
+}
+
+
 // Ajouter cette fonction au début du fichier ou dans un helper
 // function getFileIcon($filename) {
 //     $extension = pathinfo($filename, PATHINFO_EXTENSION);
