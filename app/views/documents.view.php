@@ -351,6 +351,47 @@
     .btn-green.cardss {
         padding: 4px 12px;
     }
+
+    /* Styles pour la pagination */
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 2rem;
+        gap: 1rem;
+    }
+
+    .pagination-info {
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    .pagination-btn {
+        padding: 0.5rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        background: white;
+        color: #374151;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .pagination-btn:hover:not(.disabled) {
+        background: #f9fafb;
+        border-color: #9ca3af;
+    }
+
+    .pagination-btn.disabled {
+        color: #9ca3af;
+        cursor: not-allowed;
+        background: #f3f4f6;
+    }
+
+    .pagination-current {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+    }
 </style>
 
 <main>
@@ -373,125 +414,130 @@
     <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
         
         <?php if (isset($dossier_courant) && $dossier_courant->origine_envoi == 'INTERNE'): ?>
-                <!-- Affichage des documents d'un dossier spécifique -->
-                <div class="flex justify-between items-center mb-4">
-                    <div class="flex items-center gap-2">
-                        <a href="<?= ROOT ?>/document" class="inline-flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 transition rounded-lg bg-gray-100 hover:bg-gray-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="mr-2">
-                                <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5z"/>
+            <!-- Affichage des documents d'un dossier spécifique -->
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-2">
+                    <a href="<?= ROOT ?>/document" class="inline-flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 transition rounded-lg bg-gray-100 hover:bg-gray-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="mr-2">
+                            <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5z"/>
+                        </svg>
+                        Retour aux dossiers
+                    </a>
+                    <h3 class="text-lg font-semibold"><?= esc($dossier_courant->nom) ?></h3>
+                </div>
+
+                <div class="flex gap-2">
+                    <div class="flex gap-2 ">
+                        <button  @click="DemandeFichier = true"  class="inline-flex items-center gap-2 px-4 py-3 text-sm font-medium text-brand-500 border border-brand-500 transition rounded-lg shadow-theme-xs hover:text-brand-600">
+                            Ajouter un fichier
+                            <svg class="stroke-current" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8 3.3335V12.6668M3.3335 8H12.6668" stroke="" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path>
                             </svg>
-                            Retour aux dossiers
-                        </a>
-                        <h3 class="text-lg font-semibold"><?= esc($dossier_courant->nom) ?></h3>
-                    </div>
-
-                    <div class="flex gap-2">
-                        <div class="flex gap-2 ">
-                            <!-- Afficher le bouton d'envoi UNIQUEMENT dans le service d'origine -->
-                            <?php if (isset($dossier_courant) && isset($employe) && $dossier_courant->service_id == $employe->service_id): ?>
-                                <a href="<?= ROOT ?>/document/envoyer/<?= $dossier_courant->id ?>" class="send">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.494-7.493Z"/>
-                                    </svg>
-                                    Envoyer le dossier
-                                </a>
-                            <?php endif; ?>
-                            <!-- Ajouter un lien vers les états utilisateurs -->
-                            <a href="<?= ROOT ?>/document/etats_utilisateurs/<?= $dossier_courant->id ?>" class="inline-flex items-center  px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="mr-2">
-                                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+                        </button>
+                        <!-- Afficher le bouton d'envoi UNIQUEMENT dans le service d'origine -->
+                        <?php if (isset($dossier_courant) && isset($employe) && $dossier_courant->service_id == $employe->service_id): ?>
+                            <a href="<?= ROOT ?>/document/envoyer/<?= $dossier_courant->id ?>" class="send">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.494-7.493Z"/>
                                 </svg>
-                                Voir les états
+                                Envoyer le dossier
                             </a>
-                        </div>
+                        <?php endif; ?>
+                        <!-- Ajouter un lien vers les états utilisateurs -->
+                        <a href="<?= ROOT ?>/document/etats_utilisateurs/<?= $dossier_courant->id ?>" class="inline-flex items-center  px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="mr-2">
+                                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+                            </svg>
+                            Voir les états
+                        </a>
                     </div>
                 </div>
+            </div>
 
-                <div class="mb-4">
-                    <!-- Afficher les envois actifs UNIQUEMENT pour le propriétaire -->
-                    <?php 
-                        if (isset($dossier_courant) && isset($employe) && $dossier_courant->createur_id == $employe->id): 
-                            $envoiModel = new \Model\EnvoiDossiers();
-                            $serviceModel = new \Model\Services();
-                            $envois_actifs = $envoiModel->getEnvoisActifs($dossier_courant->id);
-                    ?>
-                        <?php if ($envois_actifs): ?>
-                            <div class="flex items-center gap-2 text-sm text-gray-600">
-                                <span>Envoyé à :</span>
-                                <?php foreach ($envois_actifs as $envoi): ?>
-                                    <?php 
-                                        $service = $serviceModel->first(['id' => $envoi->service_id]);
-                                        $nom_service = $service ? $service->nom : 'Service inconnu';
-                                    ?>
-                                    <span class="bg-retirer">
-                                        <?= $envoi->type_envoi == 'SERVICE' ? "Service: $nom_service" : "Rôle {$envoi->role_service} ($nom_service)" ?>
-                                        <a href="<?= ROOT ?>/document/retirer_envoi/<?= $envoi->id ?>" class="retirer" onclick="return confirm('Retirer cet envoi ?')">
-                                            ×
-                                        </a>
-                                    </span>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                    <?php endif; ?>
-                </div>
-
-                <div class="mb-4">
-                    <!-- Bouton d'archivage -->
-                        <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg" style="margin-top: 10px;">
-                        <!-- Après l'affichage des documents, ajoutez la section de clôture -->
-                        <?php if (isset($dossier_courant) && isset($employe)): ?>
-                            <div class=" p-2 ">
+            <div class="mb-4">
+                <!-- Afficher les envois actifs UNIQUEMENT pour le propriétaire -->
+                <?php 
+                    if (isset($dossier_courant) && isset($employe) && $dossier_courant->createur_id == $employe->id): 
+                        $envoiModel = new \Model\EnvoiDossiers();
+                        $serviceModel = new \Model\Services();
+                        $envois_actifs = $envoiModel->getEnvoisActifs($dossier_courant->id);
+                ?>
+                    <?php if ($envois_actifs): ?>
+                        <div class="flex items-center gap-2 text-sm text-gray-600">
+                            <span>Envoyé à :</span>
+                            <?php foreach ($envois_actifs as $envoi): ?>
                                 <?php 
-                                    $dossierModel = new \Model\Dossiers();
-                                    $etat_utilisateur = $dossierModel->query(
-                                        "SELECT etat FROM etatdossierutilisateur WHERE dossier_id = :dossier_id AND employe_id = :employe_id",
-                                        ['dossier_id' => $dossier_courant->id, 'employe_id' => $employe->id]
-                                    );
-                                    
-                                    $etat_courant = $etat_utilisateur[0]->etat ?? 'NON_OUVERT';
+                                    $service = $serviceModel->first(['id' => $envoi->service_id]);
+                                    $nom_service = $service ? $service->nom : 'Service inconnu';
                                 ?>
+                                <span class="bg-retirer">
+                                    <?= $envoi->type_envoi == 'SERVICE' ? "Service: $nom_service" : "Rôle {$envoi->role_service} ($nom_service)" ?>
+                                    <a href="<?= ROOT ?>/document/retirer_envoi/<?= $envoi->id ?>" class="retirer" onclick="return confirm('Retirer cet envoi ?')">
+                                        ×
+                                    </a>
+                                </span>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
+
+            <div class="mb-4">
+                <!-- Bouton d'archivage -->
+                    <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg" style="margin-top: 10px;">
+                    <!-- Après l'affichage des documents, ajoutez la section de clôture -->
+                    <?php if (isset($dossier_courant) && isset($employe)): ?>
+                        <div class=" p-2 ">
+                            <?php 
+                                $dossierModel = new \Model\Dossiers();
+                                $etat_utilisateur = $dossierModel->query(
+                                    "SELECT etat FROM etatdossierutilisateur WHERE dossier_id = :dossier_id AND employe_id = :employe_id",
+                                    ['dossier_id' => $dossier_courant->id, 'employe_id' => $employe->id]
+                                );
                                 
-                                <?php if ($etat_courant != 'CLOTURE'): ?>
+                                $etat_courant = $etat_utilisateur[0]->etat ?? 'NON_OUVERT';
+                            ?>
+                            
+                            <?php if ($etat_courant != 'CLOTURE'): ?>
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm text-gray-600">
+                                        Statut actuel : <strong class="etat-badge etat-traitement" ><?= $this->getEtatLabel($etat_courant) ?></strong>
+                                    </p>
+                                    <div class="flex gap-3">
+                                        <button onclick="cloturerDossier(<?= $dossier_courant->id ?>)" 
+                                                class="etat-cloture">
+                                            📋 Clôturer ce dossier
+                                        </button>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <?php if (isset($tous_ont_cloture) && $tous_ont_cloture): ?>
                                     <div class="flex items-center justify-between">
-                                        <p class="text-sm text-gray-600">
-                                            Statut actuel : <strong class="etat-badge etat-traitement" ><?= $this->getEtatLabel($etat_courant) ?></strong>
-                                        </p>
-                                        <div class="flex gap-3">
-                                            <button onclick="cloturerDossier(<?= $dossier_courant->id ?>)" 
-                                                    class="etat-cloture">
-                                                📋 Clôturer ce dossier
-                                            </button>
-                                        
+                                        <div>
+                                            <p class="text-green-800 font-medium">✅ Tous les utilisateurs ont clôturé ce dossier</p>
+                                            <p class="text-green-600 text-sm">Vous pouvez maintenant archiver le dossier</p>
                                         </div>
+                                        <button onclick="archiverDossier(<?= $dossier_courant->id ?>)" class="btn-green">
+                                            Archiver le dossier
+                                        </button>
                                     </div>
                                 <?php else: ?>
-                                    <?php if (isset($tous_ont_cloture) && $tous_ont_cloture): ?>
-                                        <div class="flex items-center justify-between">
-                                            <div>
-                                                <p class="text-green-800 font-medium">✅ Tous les utilisateurs ont clôturé ce dossier</p>
-                                                <p class="text-green-600 text-sm">Vous pouvez maintenant archiver le dossier</p>
-                                            </div>
-                                            <button onclick="archiverDossier(<?= $dossier_courant->id ?>)" class="btn-green">
-                                                Archiver le dossier
-                                            </button>
-                                        </div>
-                                    <?php else: ?>
-                                        <div class="bg-yellow-50 rounded-lg">
-                                            <p class="text-yellow-800 text-sm">
-                                                📊 <strong>Statut :</strong> 
-                                                <?php 
-                                                    $clotures = array_filter($etats_utilisateurs, fn($e) => $e->etat == 'CLOTURE');
-                                                    $total = count($etats_utilisateurs);
-                                                    echo count($clotures) . " sur " . $total . " utilisateurs ont clôturé";
-                                                ?>
-                                            </p>
-                                        </div>
-                                    <?php endif; ?>
+                                    <div class="bg-yellow-50 rounded-lg">
+                                        <p class="text-yellow-800 text-sm">
+                                            📊 <strong>Statut :</strong> 
+                                            <?php 
+                                                $clotures = array_filter($etats_utilisateurs, fn($e) => $e->etat == 'CLOTURE');
+                                                $total = count($etats_utilisateurs);
+                                                echo count($clotures) . " sur " . $total . " utilisateurs ont clôturé";
+                                            ?>
+                                        </p>
+                                    </div>
                                 <?php endif; ?>
-                            </div>
+                            <?php endif; ?>
                         </div>
-                    <?php endif; ?>
-                </div>
+                    </div>
+                <?php endif; ?>
+            </div>
             
             
             <?php if (!empty($documents)): ?>
@@ -530,38 +576,38 @@
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                             <?php foreach ($documents as $item): ?>
                                 <?php
-                                $extension = strtolower(pathinfo($item->nom, PATHINFO_EXTENSION));
-                                $can_display_nativement = in_array($extension, ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'txt', 'csv', 'html', 'htm']);
-                                $is_word_file = in_array($extension, ['doc', 'docx']);
-                                $is_excel_file = in_array($extension, ['xls', 'xlsx']);
-                                $is_powerpoint_file = in_array($extension, ['ppt', 'pptx']);
-                                
-                                if ($can_display_nativement) {
-                                    $view_url = ROOT . '/document/visualiser/' . $item->id;
-                                    $view_text = 'Voir dans le navigateur';
-                                    $link_title = 'Ouvrir dans le navigateur';
-                                    $view_method = 'native';
-                                } elseif ($is_word_file) {
-                                    $file_url = ROOT . '/' . $dossier_courant->chemin . $item->nom_stockage;
-                                    $view_text = 'Voir le document Word';
-                                    $link_title = 'Ouvrir le document Word';
-                                    $view_method = 'word';
-                                } elseif ($is_excel_file) {
-                                    $file_url = ROOT . '/' . $dossier_courant->chemin . $item->nom_stockage;
-                                    $view_text = 'Voir le fichier Excel';
-                                    $link_title = 'Ouvrir le fichier Excel';
-                                    $view_method = 'excel';
-                                } elseif ($is_powerpoint_file) {
-                                    $view_url = ROOT . '/document/telecharger/' . $item->id;
-                                    $view_text = 'Télécharger';
-                                    $link_title = 'Télécharger le fichier';
-                                    $view_method = 'download';
-                                } else {
-                                    $view_url = ROOT . '/document/telecharger/' . $item->id;
-                                    $view_text = 'Télécharger';
-                                    $link_title = 'Télécharger le fichier';
-                                    $view_method = 'download';
-                                }
+                                    $extension = strtolower(pathinfo($item->nom, PATHINFO_EXTENSION));
+                                    $can_display_nativement = in_array($extension, ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'txt', 'csv', 'html', 'htm']);
+                                    $is_word_file = in_array($extension, ['doc', 'docx']);
+                                    $is_excel_file = in_array($extension, ['xls', 'xlsx']);
+                                    $is_powerpoint_file = in_array($extension, ['ppt', 'pptx']);
+                                    
+                                    if ($can_display_nativement) {
+                                        $view_url = ROOT . '/document/visualiser/' . $item->id;
+                                        $view_text = 'Voir dans le navigateur';
+                                        $link_title = 'Ouvrir dans le navigateur';
+                                        $view_method = 'native';
+                                    } elseif ($is_word_file) {
+                                        $file_url = ROOT . '/' . $dossier_courant->chemin . $item->nom_stockage;
+                                        $view_text = 'Voir le document Word';
+                                        $link_title = 'Ouvrir le document Word';
+                                        $view_method = 'word';
+                                    } elseif ($is_excel_file) {
+                                        $file_url = ROOT . '/' . $dossier_courant->chemin . $item->nom_stockage;
+                                        $view_text = 'Voir le fichier Excel';
+                                        $link_title = 'Ouvrir le fichier Excel';
+                                        $view_method = 'excel';
+                                    } elseif ($is_powerpoint_file) {
+                                        $view_url = ROOT . '/document/telecharger/' . $item->id;
+                                        $view_text = 'Télécharger';
+                                        $link_title = 'Télécharger le fichier';
+                                        $view_method = 'download';
+                                    } else {
+                                        $view_url = ROOT . '/document/telecharger/' . $item->id;
+                                        $view_text = 'Télécharger';
+                                        $link_title = 'Télécharger le fichier';
+                                        $view_method = 'download';
+                                    }
                                 ?>
                                 
                                 <tr>
@@ -702,6 +748,7 @@
                 </div>
             </div>
             <!-- Affichage de la liste des dossiers -->
+            <!-- Affichage de la liste des dossiers -->
             <div class="space-y-5 sm:space-y-6">
                 <?php if (!empty($dossiers)): ?>
                     <div class="dossier-grid">
@@ -756,6 +803,90 @@
                             </div>
                         <?php endforeach; ?>
                     </div>
+
+                    <!-- PAGINATION - Afficher même s'il n'y a qu'une page -->
+                    <?php if (isset($pagination) && $pagination['totalDossiers'] > 0): ?>
+                        <div class="mt-8 flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6">
+                            <!-- Informations sur la pagination -->
+                            <div class="sm:flex-1 sm:items-center sm:justify-between">
+                                <!-- <div>
+                                    <p class="text-sm text-gray-700">
+                                        Affichage des dossiers 
+                                        <span class="font-medium"><?= $pagination['startIndex'] ?></span>
+                                        à 
+                                        <span class="font-medium"><?= $pagination['endIndex'] ?></span>
+                                        sur 
+                                        <span class="font-medium"><?= $pagination['totalDossiers'] ?></span>
+                                        résultats
+                                    </p>
+                                </div> -->
+                                
+                                <!-- Navigation - Afficher seulement si plus d'une page -->
+                                <?php if ($pagination['totalPages'] >= 1): ?>
+                                    <div class="flex justify-center">
+                                        <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                            <!-- Bouton Précédent -->
+                                            <?php if ($pagination['page'] > 1): ?>
+                                                <a href="<?= ROOT ?>/document?page=<?= $pagination['page'] - 1 ?>" 
+                                                class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                                    <span class="sr-only">Précédent</span>
+                                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                        <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300 cursor-not-allowed">
+                                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                        <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </span>
+                                            <?php endif; ?>
+
+                                            <!-- Numéros de page -->
+                                            <?php for ($i = 1; $i <= $pagination['totalPages']; $i++): ?>
+                                                <?php if ($i == $pagination['page']): ?>
+                                                    <!-- Page actuelle -->
+                                                    <a href="#" aria-current="page" 
+                                                    class="relative z-10 inline-flex items-center bg-brand-500 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">
+                                                        <?= $i ?>
+                                                    </a>
+                                                <?php elseif ($i == 1 || $i == $pagination['totalPages'] || ($i >= $pagination['page'] - 1 && $i <= $pagination['page'] + 1)): ?>
+                                                    <!-- Pages proches -->
+                                                    <a href="<?= ROOT ?>/document?page=<?= $i ?>" 
+                                                    class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                                        <?= $i ?>
+                                                    </a>
+                                                <?php elseif ($i == $pagination['page'] - 2 || $i == $pagination['page'] + 2): ?>
+                                                    <!-- Points de suspension -->
+                                                    <span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300">
+                                                        ...
+                                                    </span>
+                                                <?php endif; ?>
+                                            <?php endfor; ?>
+
+                                            <!-- Bouton Suivant -->
+                                            <?php if ($pagination['page'] < $pagination['totalPages']): ?>
+                                                <a href="<?= ROOT ?>/document?page=<?= $pagination['page'] + 1 ?>" 
+                                                class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                                    <span class="sr-only">Suivant</span>
+                                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300 cursor-not-allowed">
+                                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </span>
+                                            <?php endif; ?>
+                                        </nav>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
                 <?php else: ?>
                     <div class="p-6 text-center text-gray-500 dark:text-gray-400">
                         Aucun dossier disponible. Créez votre premier dossier en uploadant un document.
@@ -763,12 +894,10 @@
                 <?php endif; ?>
             </div>
         <?php endif; ?>
-
-       
     </div>
 </main>
 
-<!-- Modal for d'ajout d'un document -->
+<!-- Modal for d'ajout d'un Dossier -->
 <div x-show="DemandeConges" class="fixed inset-0 flex items-center justify-center p-5 overflow-y-auto z-99999">
     <div class="modal-close-btn fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px]"></div>
     <div class="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
@@ -780,7 +909,7 @@
         </button>
         <div class="pr-14">
             <h4 class="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-                Ajouter un nouveau document
+                Ajouter un nouveau ossier
             </h4>
             <p class="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
                 Téléversez un document et spécifiez son dossier
@@ -823,6 +952,43 @@
             </div>
         </form>
     </div>
+</div>
+
+<!-- Modal for d'ajout d'un document (dans le dossier existant) -->
+<div x-show="DemandeFichier" class="fixed inset-0 flex items-center justify-center p-5 overflow-y-auto z-99999">
+    <!-- ... contenu existant ... -->
+    <form method="post" action="<?= ROOT ?>/document" enctype="multipart/form-data">
+        <!-- Champ hidden pour le dossier_id -->
+        <input type="hidden" name="dossier_id" value="<?= $dossier_courant->id ?? '' ?>">
+        
+        <div class="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2 mb-6">
+            <div class="col-span-2">
+                <div class="submission-container">
+                    <div class="form-group file-upload-group">
+                        <div class="file-upload-area" id="fileUploadAreaExisting">
+                            <!-- AJOUT DE multiple DANS L'INPUT -->
+                            <input type="file" id="fileInputExisting" name="files[]" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.txt,.csv,.html,.htm">
+                            <label for="fileInputExisting" class="file-upload-label">
+                                <div class="file-icon-svg" id="defaultFileIconExisting">
+                                    <svg viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>
+                                </div>
+                                <span id="fileLabelTextExisting">Glissez-déposez vos fichiers ou cliquez pour sélectionner</span>
+                                <span class="file-requirements">(Formats acceptés: JPG, PDF, DOC, DOCX, XLS, ZIP - Max 10MB par fichier)</span>
+                            </label>
+                            <div class="file-preview" id="filePreviewExisting"></div>
+                            <div class="files-count" id="filesCountExisting">Aucun fichier sélectionné</div>
+                            <div class="upload-status" id="uploadStatusExisting"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3">
+            <button type="button" @click="DemandeFichier = false" class="flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] sm:w-auto">Annuler</button>
+            <button type="submit" class="flex w-full justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 sm:w-auto">Téléverser les documents</button>
+        </div>
+    </form>
 </div>
 
 <script>
@@ -1020,4 +1186,170 @@ function formatFileSize(bytes) {
 }
 </script>
 
-<?php $this->view("footer"); ?>
+<!-- LA GESTION POUR AJOUTER UN FICHIER DANS UN DOSSIER EXISTANTES -->
+<script>
+// ========== INITIALISATION DES DEUX MODALS ==========
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialisation pour le modal de nouveau dossier
+    initializeFileUpload('fileUploadAreaNew', 'fileInputNew', 'filePreviewNew', 'filesCountNew', 'uploadStatusNew', 'fileLabelTextNew', 'defaultFileIconNew');
+    
+    // Initialisation pour le modal de dossier existant
+    initializeFileUpload('fileUploadAreaExisting', 'fileInputExisting', 'filePreviewExisting', 'filesCountExisting', 'uploadStatusExisting', 'fileLabelTextExisting', 'defaultFileIconExisting');
+});
+
+function initializeFileUpload(uploadAreaId, fileInputId, previewId, countId, statusId, labelTextId, fileIconId) {
+    const fileUploadArea = document.getElementById(uploadAreaId);
+    const fileInput = document.getElementById(fileInputId);
+    const filePreview = document.getElementById(previewId);
+    const filesCount = document.getElementById(countId);
+    const uploadStatus = document.getElementById(statusId);
+    const fileLabelText = document.getElementById(labelTextId);
+    const defaultFileIcon = document.getElementById(fileIconId);
+    
+    let selectedFiles = [];
+
+    if (!fileUploadArea || !fileInput) return;
+
+    // Événements de drag & drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        fileUploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        fileUploadArea.addEventListener(eventName, () => {
+            fileUploadArea.classList.add('drag-over');
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        fileUploadArea.addEventListener(eventName, () => {
+            fileUploadArea.classList.remove('drag-over');
+        }, false);
+    });
+
+    fileUploadArea.addEventListener('drop', handleDrop, false);
+    fileInput.addEventListener('change', handleFileSelect, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFiles(files);
+    }
+
+    function handleFileSelect(e) {
+        const files = e.target.files;
+        handleFiles(files);
+    }
+
+    function handleFiles(files) {
+        selectedFiles = Array.from(files);
+        updateFilePreview();
+        updateFilesCount();
+        
+        if (selectedFiles.length > 0) {
+            fileUploadArea.classList.add('has-files');
+            fileLabelText.textContent = `${selectedFiles.length} fichier(s) sélectionné(s)`;
+            defaultFileIcon.style.color = '#10b981';
+        } else {
+            fileUploadArea.classList.remove('has-files');
+            fileLabelText.textContent = 'Glissez-déposez vos fichiers ou cliquez pour sélectionner';
+            defaultFileIcon.style.color = '#9ca3af';
+        }
+    }
+
+    function updateFilePreview() {
+        filePreview.innerHTML = '';
+        
+        selectedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-preview-item';
+            
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            const fileIcon = getFileIconSVG(fileExtension);
+            
+            fileItem.innerHTML = `
+                ${fileIcon}
+                <div class="file-preview-name">${file.name}</div>
+                <div class="file-preview-size">${formatFileSize(file.size)}</div>
+                <div class="remove-file" onclick="removeFileFromPreview(${index}, '${uploadAreaId}', '${fileInputId}', '${previewId}', '${countId}', '${labelTextId}', '${fileIconId}')">×</div>
+            `;
+            
+            filePreview.appendChild(fileItem);
+        });
+    }
+
+    function updateFilesCount() {
+        if (selectedFiles.length === 0) {
+            filesCount.textContent = 'Aucun fichier sélectionné';
+        } else {
+            filesCount.textContent = `${selectedFiles.length} fichier(s) sélectionné(s) - ${formatTotalSize(selectedFiles)}`;
+        }
+    }
+
+    function formatTotalSize(files) {
+        const totalSize = files.reduce((total, file) => total + file.size, 0);
+        return formatFileSize(totalSize);
+    }
+}
+
+// Fonction pour supprimer un fichier de la prévisualisation
+function removeFileFromPreview(index, uploadAreaId, fileInputId, previewId, countId, labelTextId, fileIconId) {
+    const fileUploadArea = document.getElementById(uploadAreaId);
+    const fileInput = document.getElementById(fileInputId);
+    const fileLabelText = document.getElementById(labelTextId);
+    const defaultFileIcon = document.getElementById(fileIconId);
+    
+    // Créer un nouveau FileList sans le fichier supprimé
+    const dt = new DataTransfer();
+    const files = Array.from(fileInput.files);
+    
+    files.forEach((file, i) => {
+        if (i !== index) {
+            dt.items.add(file);
+        }
+    });
+    
+    fileInput.files = dt.files;
+    
+    // Réinitialiser l'interface
+    initializeFileUpload(uploadAreaId, fileInputId, previewId, countId, 'uploadStatusExisting', labelTextId, fileIconId);
+    
+    if (dt.files.length === 0) {
+        fileUploadArea.classList.remove('has-files');
+        fileLabelText.textContent = 'Glissez-déposez vos fichiers ou cliquez pour sélectionner';
+        defaultFileIcon.style.color = '#9ca3af';
+    }
+}
+
+// Fonction utilitaire pour les icônes de fichiers
+function getFileIconSVG(extension) {
+    const icons = {
+        pdf: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg>',
+        doc: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
+        docx: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
+        xls: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
+        xlsx: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
+        jpg: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
+        jpeg: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
+        png: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>'
+    };
+    
+    return icons[extension] || '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0 || bytes === undefined) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+</script>
+
+
+<?php $this->view("footer"); ?>0

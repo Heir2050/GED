@@ -230,6 +230,70 @@ class Dossiers
     /**
      * Récupérer les dossiers visibles pour un utilisateur avec le nombre de documents
      */
+
+    public function getDossiersVisibles($employe_id, $service_id, $role_service)
+    {
+        $envoiModel = new EnvoiDossiers();
+        $documentModel = new Documents();
+        
+        $dossiersRecus = $envoiModel->getDossiersRecus($employe_id, $service_id, $role_service);
+        
+        // Dossiers internes du service
+        $dossiersInternes = $this->where([
+            'service_id' => $service_id,
+            'est_envoye' => false,
+            'est_archive' => false
+        ]);
+    
+        // Fusionner les résultats et ajouter le nombre de documents
+        $dossiersVisibles = [];
+    
+        // Traiter les dossiers internes
+        if ($dossiersInternes) {
+            foreach ($dossiersInternes as $dossier) {
+                $dossier->origine = 'INTERNE';
+                $dossier->nb_documents = $documentModel->query(
+                    "SELECT COUNT(*) as count FROM documents WHERE dossier_id = :dossier_id",
+                    ['dossier_id' => $dossier->id]
+                )[0]->count ?? 0;
+                $dossiersVisibles[] = $dossier;
+            }
+        }
+    
+        // Traiter les dossiers reçus
+        if ($dossiersRecus) {
+            foreach ($dossiersRecus as $dossier) {
+                $dossier->origine = 'EXTERNE';
+                $dossier->nb_documents = $documentModel->query(
+                    "SELECT COUNT(*) as count FROM documents WHERE dossier_id = :dossier_id",
+                    ['dossier_id' => $dossier->id]
+                )[0]->count ?? 0;
+                $dossiersVisibles[] = $dossier;
+            }
+        }
+    
+        // TRIER LES DOSSIERS PAR DATE DE CRÉATION (du plus récent au plus ancien)
+        usort($dossiersVisibles, function($a, $b) {
+            $dateA = strtotime($a->date_creation);
+            $dateB = strtotime($b->date_creation);
+            return $dateB - $dateA; // Ordre décroissant (plus récent en premier)
+        });
+    
+        return $dossiersVisibles;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+/*
     public function getDossiersVisibles($employe_id, $service_id, $role_service)
     {
         $envoiModel = new EnvoiDossiers();
@@ -273,57 +337,8 @@ class Dossiers
 
         return $dossiersVisibles;
     }
+*/
 
 
-
-
     
-
-//     public function test_cloture_direct($dossier_id, $employe_id)
-// {
-//     $dossier = new Dossiers();
-    
-//     echo "<h1>Test Clôture Direct</h1>";
-//     echo "Dossier ID: $dossier_id<br>";
-//     echo "Employé ID: $employe_id<br>";
-    
-//     // Test 1: Vérifier l'état actuel
-//     $etat_actuel = $dossier->query("
-//         SELECT etat, date_cloture FROM etatdossierutilisateur 
-//         WHERE dossier_id = :dossier_id AND employe_id = :employe_id
-//     ", ['dossier_id' => $dossier_id, 'employe_id' => $employe_id]);
-    
-//     echo "État actuel: <pre>" . print_r($etat_actuel, true) . "</pre>";
-    
-//     // Test 2: Mise à jour directe avec la bonne casse
-//     $query = "UPDATE etatdossierutilisateur SET etat = 'CLOTURE', date_cloture = NOW() WHERE dossier_id = :dossier_id AND employe_id = :employe_id";
-//     $result = $dossier->query($query, ['dossier_id' => $dossier_id, 'employe_id' => $employe_id]);
-    
-//     echo "Résultat mise à jour directe: " . ($result ? 'SUCCÈS' : 'ÉCHEC') . "<br>";
-    
-//     // Test 3: Vérifier après mise à jour
-//     $etat_apres = $dossier->query("
-//         SELECT etat, date_cloture FROM etatdossierutilisateur 
-//         WHERE dossier_id = :dossier_id AND employe_id = :employe_id
-//     ", ['dossier_id' => $dossier_id, 'employe_id' => $employe_id]);
-    
-//     echo "État après mise à jour directe: <pre>" . print_r($etat_apres, true) . "</pre>";
-    
-//     // Test 4: Utiliser la méthode mettreAJourEtat
-//     echo "<h2>Test avec mettreAJourEtat</h2>";
-//     $result2 = $dossier->mettreAJourEtat($dossier_id, $employe_id, 'CLOTURE');
-//     echo "Résultat mettreAJourEtat: " . ($result2 ? 'SUCCÈS' : 'ÉCHEC') . "<br>";
-    
-//     // Vérifier final
-//     $etat_final = $dossier->query("
-//         SELECT etat, date_cloture FROM etatdossierutilisateur 
-//         WHERE dossier_id = :dossier_id AND employe_id = :employe_id
-//     ", ['dossier_id' => $dossier_id, 'employe_id' => $employe_id]);
-    
-//     echo "État final: <pre>" . print_r($etat_final, true) . "</pre>";
-    
-//     die();
-// }
-
-
 }

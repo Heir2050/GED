@@ -34,11 +34,6 @@ class Document
             redirect('login');
         }
 
-        // Mettre à jour la dernière connexion
-        // if ($ses->is_logged_in()) {
-        //     $this->updateLastLogin($ses->user('id'));
-        // }
-
         $service_id = $this->getServiceIdUtilisateur($ses);
 
         // Récupérer les informations de l'employé
@@ -52,22 +47,47 @@ class Document
         $data['employe'] = $employe;
 
         // Récupérer les dossiers visibles
-        $data['dossiers'] = $dossier->getDossiersVisibles(
+        $dossiers = $dossier->getDossiersVisibles(
             $employe->id, 
             $employe->service_id, 
             $employe->role_service
         );
 
-        // Récupérer seulement les dossiers non archivés
-        // $data['dossiers'] = $dossier->query("
-        //     SELECT d.*, COUNT(doc.id) as nb_documents 
-        //     FROM dossiers d 
-        //     LEFT JOIN documents doc ON d.id = doc.dossier_id 
-        //     WHERE d.est_archive = false
-        //     " . ($service_id ? " AND d.service_id = :service_id" : "") . "
-        //     GROUP BY d.id
-        //     ORDER BY d.nom
-        // ", $service_id ? ['service_id' => $service_id] : []);
+        // Trier les dossiers par date de création (du plus récent au plus ancien)
+        if (!empty($dossiers)) {
+            usort($dossiers, function($a, $b) {
+                $dateA = strtotime($a->date_creation);
+                $dateB = strtotime($b->date_creation);
+                return $dateB - $dateA; // Ordre décroissant (plus récent en premier)
+            });
+        }
+
+        // PAGINATION
+        $page = $req->get('page') ? (int)$req->get('page') : 1;
+        $perPage = 12; // 12 dossiers par page
+        $totalDossiers = count($dossiers);
+        $totalPages = ceil($totalDossiers / $perPage);
+        
+        // Validation de la page
+        if ($page < 1) $page = 1;
+        if ($page > $totalPages && $totalPages > 0) $page = $totalPages;
+        
+        // Calcul des indices pour la pagination
+        $startIndex = ($page - 1) * $perPage;
+        $dossiersPagines = array_slice($dossiers, $startIndex, $perPage);
+
+        // Données pour la vue
+        $data['dossiers'] = $dossiersPagines;
+        $data['pagination'] = [
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'totalDossiers' => $totalDossiers,
+            'perPage' => $perPage,
+            'startIndex' => $startIndex + 1,
+            'endIndex' => min($startIndex + $perPage, $totalDossiers)
+        ];
+        // FIN PAGINATION
+
 
         // Si un dossier est spécifié, afficher ses documents
         $dossier_id = $req->get('dossier_id');
@@ -89,14 +109,13 @@ class Document
                 $data['etats_utilisateurs'] = $dossier->getEtatsUtilisateurs($dossier_id);
                 $data['tous_ont_cloture'] = $dossier->tousUtilisateursOntCloture($dossier_id);
                 
-            // Mettre à jour l'état de l'utilisateur courant
-            $this->mettreAJourEtatUtilisateur($dossier_id, $employe->id, 'TRAITEMENT');
-            
-            // Marquer les notifications d'envoi de ce dossier comme lues
-            $this->marquerNotificationsEnvoiCommeLues($dossier_id, $employe->id);
+                // Mettre à jour l'état de l'utilisateur courant
+                $this->mettreAJourEtatUtilisateur($dossier_id, $employe->id, 'TRAITEMENT');
+                
+                // Marquer les notifications d'envoi de ce dossier comme lues
+                $this->marquerNotificationsEnvoiCommeLues($dossier_id, $employe->id);
             }
         }
-
 
         // Création d'un document
         if ($req->posted() && $ses->is_logged_in()) {
@@ -105,86 +124,118 @@ class Document
             $arr = $req->post();
 
             if (!empty($file['files']['name'][0])) {
-                $dossierName = trim($arr['dossier_name']);
-                
-                if (empty($dossierName)) {
-                    $document->errors['dossier'] = "Le nom du dossier est requis";
-                    $data['errors'] = $document->errors;
-                    $this->view('documents', $data);
-                    return;
-                }
-
-                // Chercher ou créer le dossier
-                // Chercher ou créer le dossier
-                $existingDossier = $dossier->first(['nom' => $dossierName]);
-
-                if ($existingDossier) {
-                    $dossierId = $existingDossier->id;
-                    $dossierPath = ROOTPATH . "/uploads/documents/" . $dossierName . "/";
-                    $serviceId = $existingDossier->service_id;
+                // CAS 1: Ajout dans un dossier existant (dossier_id fourni)
+                if (!empty($arr['dossier_id'])) {
+                    $dossierId = $arr['dossier_id'];
+                    $dossierExistant = $dossier->first(['id' => $dossierId]);
                     
-                    // Vérifier que le dossier physique existe
-                    if (!file_exists($dossierPath)) {
-                        mkdir($dossierPath, 0777, true);
-                    }
-                } else {
-                    // Créer un nouveau dossier
-                    $user_id = $ses->user('id');
-                    
-                    // Vérifier si l'utilisateur a un profil employé
-                    $employe = $employeModel->first(['id' => $user_id]);
-                    
-                    if (!$employe) {
-                        // Si pas de lien direct, chercher par email ou autre champ commun
-                        $user = $userModel->first(['id' => $user_id]);
-                        $employe = $employeModel->first(['email' => $user->email]);
-                    }
-                    
-                    if (!$employe) {
-                        $document->errors['dossier'] = "Profil employé non trouvé";
+                    if (!$dossierExistant) {
+                        $document->errors['dossier'] = "Dossier introuvable";
                         $data['errors'] = $document->errors;
                         $this->view('documents', $data);
                         return;
                     }
                     
-                    // Vérifier/créer le répertoire parent
-                    $parentDir = ROOTPATH . "/uploads/documents/";
-                    if (!file_exists($parentDir)) {
-                        mkdir($parentDir, 0777, true);
+                    // Vérifier que l'utilisateur a le droit d'ajouter des fichiers à ce dossier
+                    $accesAutorise = $this->verifierAccesDossier($dossierId, $employe->id, $employe->service_id, $employe->role_service);
+                    
+                    if (!$accesAutorise) {
+                        message("Accès non autorisé à ce dossier", 'error');
+                        redirect('document');
                     }
                     
-                    // Créer le dossier en base
-                    $dossierData = [
-                        'nom' => $dossierName,
-                        'chemin' => 'uploads/documents/' . $dossierName . '/',
-                        'service_id' => $employe->service_id,
-                        'createur_id' => $employe->id,
-                        'date_creation' => date('Y-m-d H:i:s')
-                    ];
+                    $dossierName = $dossierExistant->nom;
+                    $dossierPath = ROOTPATH . "/" . $dossierExistant->chemin;
+                    $serviceId = $dossierExistant->service_id;
                     
-                    $dossier->insert($dossierData);
-
-                    // Récupérer l'ID du dossier créé
-                    $newDossier = $dossier->first(['nom' => $dossierName]);
-                    $dossierId = $newDossier->id;
-                    $dossierPath = ROOTPATH . "/" . $newDossier->chemin; // Chemin absolu
-                    $serviceId = $newDossier->service_id;
-                    
-                    // Créer le dossier physique sur le serveur
+                    // Vérifier que le dossier physique existe
                     if (!file_exists($dossierPath)) {
                         mkdir($dossierPath, 0777, true);
                     }
                     
-                    // ENREGISTRER L'ACTION DE CRÉATION DE DOSSIER
-                    $this->enregistrerAction(
-                        'CREATION_DOSSIER',
-                        "Création du dossier \"{$dossierName}\"",
-                        null,
-                        $dossierId
-                    );
+                } 
+                // CAS 2: Création d'un nouveau dossier (dossier_name fourni)
+                else {
+                    $dossierName = trim($arr['dossier_name']);
+                    
+                    if (empty($dossierName)) {
+                        $document->errors['dossier'] = "Le nom du dossier est requis";
+                        $data['errors'] = $document->errors;
+                        $this->view('documents', $data);
+                        return;
+                    }
+
+                    // Chercher ou créer le dossier
+                    $existingDossier = $dossier->first(['nom' => $dossierName]);
+
+                    if ($existingDossier) {
+                        $dossierId = $existingDossier->id;
+                        $dossierPath = ROOTPATH . "/uploads/documents/" . $dossierName . "/";
+                        $serviceId = $existingDossier->service_id;
+                        
+                        // Vérifier que le dossier physique existe
+                        if (!file_exists($dossierPath)) {
+                            mkdir($dossierPath, 0777, true);
+                        }
+                    } else {
+                        // Créer un nouveau dossier
+                        $user_id = $ses->user('id');
+                        
+                        // Vérifier si l'utilisateur a un profil employé
+                        $employe = $employeModel->first(['id' => $user_id]);
+                        
+                        if (!$employe) {
+                            // Si pas de lien direct, chercher par email ou autre champ commun
+                            $user = $userModel->first(['id' => $user_id]);
+                            $employe = $employeModel->first(['email' => $user->email]);
+                        }
+                        
+                        if (!$employe) {
+                            $document->errors['dossier'] = "Profil employé non trouvé";
+                            $data['errors'] = $document->errors;
+                            $this->view('documents', $data);
+                            return;
+                        }
+                        
+                        // Vérifier/créer le répertoire parent
+                        $parentDir = ROOTPATH . "/uploads/documents/";
+                        if (!file_exists($parentDir)) {
+                            mkdir($parentDir, 0777, true);
+                        }
+                        
+                        // Créer le dossier en base
+                        $dossierData = [
+                            'nom' => $dossierName,
+                            'chemin' => 'uploads/documents/' . $dossierName . '/',
+                            'service_id' => $employe->service_id,
+                            'createur_id' => $employe->id,
+                            'date_creation' => date('Y-m-d H:i:s')
+                        ];
+                        
+                        $dossier->insert($dossierData);
+
+                        // Récupérer l'ID du dossier créé
+                        $newDossier = $dossier->first(['nom' => $dossierName]);
+                        $dossierId = $newDossier->id;
+                        $dossierPath = ROOTPATH . "/" . $newDossier->chemin; // Chemin absolu
+                        $serviceId = $newDossier->service_id;
+                        
+                        // Créer le dossier physique sur le serveur
+                        if (!file_exists($dossierPath)) {
+                            mkdir($dossierPath, 0777, true);
+                        }
+                        
+                        // ENREGISTRER L'ACTION DE CRÉATION DE DOSSIER
+                        $this->enregistrerAction(
+                            'CREATION_DOSSIER',
+                            "Création du dossier \"{$dossierName}\"",
+                            null,
+                            $dossierId
+                        );
+                    }
                 }
 
-                // TRAITEMENT DE TOUS LES FICHIERS
+                // TRAITEMENT DE TOUS LES FICHIERS (commun aux deux cas)
                 $uploadSuccess = true;
                 $uploadedFiles = 0;
                 $uploadedDocumentIds = [];
@@ -235,10 +286,6 @@ class Document
                                 $dossierName
                             );
                             */
-                            // Trouver l'employé correspondant à l'utilisateur
-
-
-
 
                         } else {
                             $uploadSuccess = false;
@@ -248,7 +295,18 @@ class Document
                 }
                 
                 if ($uploadSuccess && $uploadedFiles > 0) {
-                    $message = "$uploadedFiles document(s) téléversé(s) avec succès dans le dossier '$dossierName'";
+                    $message = "$uploadedFiles document(s) téléversé(s) avec succès";
+                    
+                    // Message différent selon le cas
+                    if (!empty($arr['dossier_id'])) {
+                        $message .= " dans le dossier existant '$dossierName'";
+                        // Rediriger vers le dossier actuel
+                        redirect('document?dossier_id=' . $dossierId);
+                    } else {
+                        $message .= " dans le nouveau dossier '$dossierName'";
+                        // Rediriger vers la liste des dossiers
+                        redirect('document');
+                    }
                     
                     // Ajouter l'information sur les notifications envoyées
                     if (isset($notificationsSent)) {
@@ -256,7 +314,7 @@ class Document
                     }
                     
                     message($message);
-                    redirect('document');
+                    
                 } else {
                     if ($uploadedFiles > 0) {
                         message("$uploadedFiles document(s) téléversé(s), mais certaines erreurs sont survenues");
