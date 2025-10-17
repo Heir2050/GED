@@ -9,14 +9,13 @@ class EnvoiDossiers
 
     protected $table = 'envoidossiers';
     protected $allowedColumns = [
-        'id',
         'dossier_id',
-        'type_envoi',
-        'service_id',
+        'type_envoi', 
+        'service_id', // Doit pouvoir être NULL
         'role_service',
-        'date_envoi',
         'envoyeur_id',
-        'est_actif'
+        'est_actif',
+        'date_envoi'
     ];
 
     /**
@@ -27,50 +26,82 @@ class EnvoiDossiers
      * Envoyer un dossier à un service ou rôle spécifique - Version avec requête directe
      */
     public function envoyerDossier($dossier_id, $type_envoi, $service_id = null, $role_service = null, $envoyeur_id)
-    {
-        // CORRECTION : Vérifier l'existence avec une requête SQL précise
-        $query = "
-            SELECT COUNT(*) as count 
-            FROM envoidossiers 
-            WHERE dossier_id = :dossier_id 
-            AND type_envoi = :type_envoi 
-            AND service_id = :service_id 
-            AND est_actif = true
-        ";
-        $params = [
-            'dossier_id' => $dossier_id,
-            'type_envoi' => $type_envoi,
-            'service_id' => $service_id
-        ];
-        if ($type_envoi == 'ROLE_SERVICE') {
-            $query .= " AND role_service = :role_service";
-            $params['role_service'] = $role_service;
-        } else {
-            $query .= " AND role_service IS NULL";
-        }
-        $result = $this->query($query, $params);
-        if ($result && $result[0]->count > 0) {
-            error_log("Envoi déjà existant - Dossier: $dossier_id, Type: $type_envoi, Service: $service_id, Rôle: " . ($role_service ?? 'NULL'));
-            return false;
-        }
-        $data = [
-            'dossier_id' => $dossier_id,
-            'type_envoi' => $type_envoi,
-            'service_id' => $service_id,
-            'role_service' => ($type_envoi == 'ROLE_SERVICE') ? $role_service : null,
-            'envoyeur_id' => $envoyeur_id,
-            'date_envoi' => date('Y-m-d H:i:s'),
-            'est_actif' => true
-        ];
-        $insertResult = $this->insert($data);
-        if ($insertResult) {
-            error_log("Envoi créé avec succès - Dossier: $dossier_id, Type: $type_envoi, Service: $service_id, Rôle: " . ($role_service ?? 'NULL'));
-            $this->ajouterUtilisateursServiceDestinataire($dossier_id, $service_id, $type_envoi, $role_service);
-        } else {
-            error_log("Erreur lors de l'insertion dans envoidossiers");
-        }
-        return $insertResult;
+{
+    // Normaliser les valeurs NULL - CORRECTION ICI
+    $service_id = (empty($service_id) || $service_id === '0') ? null : (int)$service_id;
+    $role_service = (empty($role_service)) ? null : $role_service;
+
+    // Construction dynamique de la requête
+    $whereConditions = [
+        "dossier_id = :dossier_id",
+        "type_envoi = :type_envoi", 
+        "est_actif = true"
+    ];
+    
+    $params = [
+        'dossier_id' => $dossier_id,
+        'type_envoi' => $type_envoi
+    ];
+
+    // Condition pour service_id - GESTION AMÉLIORÉE DES NULL
+    if ($service_id === null) {
+        $whereConditions[] = "service_id IS NULL";
+    } else {
+        $whereConditions[] = "service_id = :service_id";
+        $params['service_id'] = $service_id;
     }
+
+    // Condition pour role_service
+    if ($type_envoi == 'ROLE_SERVICE') {
+        if ($role_service === null) {
+            $whereConditions[] = "role_service IS NULL";
+        } else {
+            $whereConditions[] = "role_service = :role_service";
+            $params['role_service'] = $role_service;
+        }
+    } else {
+        $whereConditions[] = "role_service IS NULL";
+    }
+
+    $query = "SELECT COUNT(*) as count FROM envoidossiers WHERE " . implode(" AND ", $whereConditions);
+    
+    $result = $this->query($query, $params);
+
+    if ($result && $result[0]->count > 0) {
+        error_log("Envoi déjà existant - Dossier: $dossier_id, Type: $type_envoi, Service: " . ($service_id ?? 'NULL') . ", Rôle: " . ($role_service ?? 'NULL'));
+        return false;
+    }
+    
+    // Préparation des données d'insertion - CORRECTION ICI
+    $data = [
+        'dossier_id' => $dossier_id,
+        'type_envoi' => $type_envoi,
+        'service_id' => $service_id, // Peut être NULL
+        'role_service' => $role_service, // Peut être NULL
+        'envoyeur_id' => $envoyeur_id,
+        'date_envoi' => date('Y-m-d H:i:s'),
+        'est_actif' => true
+    ];
+
+    // Nettoyer les données pour éviter les chaînes vides
+    foreach ($data as $key => $value) {
+        if ($value === '') {
+            $data[$key] = null;
+        }
+    }
+
+    $insertResult = $this->insert($data);
+
+    if ($insertResult) {
+        error_log("Envoi créé avec succès - Dossier: $dossier_id, Type: $type_envoi, Service: " . ($service_id ?? 'NULL') . ", Rôle: " . ($role_service ?? 'NULL'));
+        $this->ajouterUtilisateursServiceDestinataire($dossier_id, $service_id, $type_envoi, $role_service);
+        return true;
+    } else {
+        error_log("Erreur lors de l'insertion dans envoidossiers");
+        return false;
+    }
+}
+
 
     /**
      * Ajouter les utilisateurs du service destinataire dans etatdossierutilisateur

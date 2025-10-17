@@ -249,6 +249,25 @@ trait Model
 	// 	$this->enregistrerAction('LOGIN', 'Connexion au système');
 	// }
 
+	
+
+	public function getEnumValues($columnName)
+	{
+		$query = "SHOW COLUMNS FROM {$this->table} WHERE Field = ?";
+		$result = $this->query($query, [$columnName]);
+		
+		if ($result && !empty($result[0]->Type)) {
+			$type = $result[0]->Type;
+			// Extraction des valeurs ENUM
+			preg_match("/^enum\(\'(.*)\'\)$/", $type, $matches);
+			if (!empty($matches[1])) {
+				return explode("','", $matches[1]);
+			}
+		}
+		
+		return [];
+	}
+
 
 
 }

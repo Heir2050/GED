@@ -36,6 +36,8 @@ class Document
 
         $service_id = $this->getServiceIdUtilisateur($ses);
 
+        
+
         // Récupérer les informations de l'employé
         $employe = $this->getEmployeInfo($ses);
         if (!$employe) {
@@ -809,12 +811,15 @@ public function dossier_stats($dossier_id = null)
 /**
  * Envoyer un dossier
  */
+/**
+ * Envoyer un dossier
+ */
 public function envoyer($dossier_id = null)
 {
-    $ses = new Session();
-    $req = new Request();
-    $dossier = new Dossiers();
-    $envoiModel = new \Model\EnvoiDossiers();
+    $ses          = new Session();
+    $req          = new Request();
+    $dossier      = new Dossiers();
+    $envoiModel   = new \Model\EnvoiDossiers();
     $serviceModel = new \Model\Services();
 
     if (!$ses->is_logged_in()) {
@@ -827,101 +832,138 @@ public function envoyer($dossier_id = null)
         redirect('document');
     }
 
-    // RÉCUPÉRER LES DONNÉES DU DOSSIER AVANT TOUT
+    // -----  RÉCUPÉRER LE DOSSIER  -----
     $dossier_data = $dossier->first(['id' => $dossier_id]);
     if (!$dossier_data) {
         message("Dossier non trouvé", 'error');
         redirect('document');
     }
 
+    // -----  TRAITEMENT DU POST  -----
     if ($req->posted() && $dossier_id) {
-        $type_envoi = $req->post('type_envoi');
-        $service_dest = $req->post('service_dest');
-        $role_dest = $req->post('role_dest');
+        /* CORRECTION : Conversion explicite en NULL */
+        $type_envoi   = $req->post('type_envoi');
+        $service_dest = $req->post('service_dest') ? (int)$req->post('service_dest') : null;
+        $role_dest    = $req->post('role_dest') ?: null;
 
-        // Validation
+        // Conversion des chaînes vides en NULL
+        if ($service_dest === '') $service_dest = null;
+        if ($role_dest === '') $role_dest = null;
+
+        // validation
         if ($type_envoi == 'SERVICE' && empty($service_dest)) {
             message("Veuillez sélectionner un service", 'error');
             redirect('document/envoyer/' . $dossier_id);
         }
-
-        if ($type_envoi == 'ROLE_SERVICE') {
-            if (empty($service_dest) || empty($role_dest)) {
-                message("Veuillez sélectionner un service ET un rôle", 'error');
-                redirect('document/envoyer/' . $dossier_id);
-            }
-        }
-
-        // CORRECTION : S'assurer que service_id n'est jamais null
-        if ($type_envoi == 'ROLE_SERVICE' && !empty($service_dest)) {
-            // Envoyer le dossier
-            $result = $envoiModel->envoyerDossier(
-                $dossier_id,
-                $type_envoi,
-                $service_dest, // Toujours un service_id valide
-                $role_dest,
-                $employe->id
-            );
-        } else if ($type_envoi == 'SERVICE' && !empty($service_dest)) {
-            $result = $envoiModel->envoyerDossier(
-                $dossier_id,
-                $type_envoi,
-                $service_dest,
-                null, // role_dest = null pour envoi par service
-                $employe->id
-            );
-        } else {
-            message("Paramètres d'envoi invalides", 'error');
+        if ($type_envoi == 'ROLE_SERVICE' && empty($role_dest)) {
+            message("Veuillez sélectionner un rôle", 'error');
             redirect('document/envoyer/' . $dossier_id);
         }
 
-
-        // Envoyer le dossier
+        // envoi
         $result = $envoiModel->envoyerDossier(
             $dossier_id,
             $type_envoi,
-            $service_dest,
+            $service_dest,   // peut être NULL
             $role_dest,
             $employe->id
         );
 
+        // log & message
         if ($result) {
-            // Marquer le dossier comme envoyé
             $dossier->marquerCommeEnvoye($dossier_id);
-            
-            // CORRECTION : Récupérer le nom du service destinataire pour un meilleur affichage
-            $service_dest_data = $serviceModel->first(['id' => $service_dest]);
-            $nom_service_dest = $service_dest_data ? $service_dest_data->nom : "ID: $service_dest";
-            
-            // CORRECTION : Construire le message de destination
-            if ($type_envoi == 'SERVICE') {
-                $destinataire = "Service: $nom_service_dest";
-            } else {
-                $destinataire = "Rôle: $role_dest dans Service: $nom_service_dest";
-            }
-            
-            // ENREGISTRER L'ACTION - CORRECTION : Vérifier le résultat
-            $action_result = $this->enregistrerAction(
-                'ENVOI_DOSSIER', 
-                "Envoi du dossier \"{$dossier_data->nom}\" à $destinataire",
+
+            $dest = $type_envoi === 'SERVICE'
+                ? 'Service : ' . ($serviceModel->first(['id' => $service_dest])->nom ?? "ID:$service_dest")
+                : 'Rôle : ' . $role_dest . ($service_dest ? " (Service:$service_dest)" : " (tous services)");
+
+            $this->enregistrerAction(
+                'ENVOI_DOSSIER',
+                "Envoi du dossier \"{$dossier_data->nom}\" à $dest",
                 null,
                 $dossier_id
             );
-            
-            message("Dossier envoyé avec succès");
+            message("Dossier envoyé avec succès ✅");
         } else {
             message("Ce dossier a déjà été envoyé à cette destination", 'error');
         }
-
         redirect('document?dossier_id=' . $dossier_id);
     }
 
-    $data['dossier'] = $dossier_data; // Utiliser la variable déjà récupérée
-    $data['services'] = $serviceModel->findAll();
-    $data['roles'] = ['EMPLOYE', 'CHEF_SERVICE', 'ADMIN_SERVICE'];
+    // -----  PRÉPARATION DE LA VUE  -----
+    $service_utilisateur = $employe->service_id;
+    $tous_services       = $serviceModel->findAll();
+
+    $envois_existants = $envoiModel->where([
+        'dossier_id' => $dossier_id,
+        'est_actif'  => true
+    ]);
+
+    $services_exclus = [$service_utilisateur];
+    if ($envois_existants) {
+        foreach ($envois_existants as $e) {
+            if ($e->service_id) {
+                $services_exclus[] = $e->service_id;
+            }
+        }
+    }
+
+    $services_disponibles = array_filter($tous_services, function ($s) use ($services_exclus) {
+        return !in_array($s->id, $services_exclus);
+    });
+
+    $roles = [];
+    try {
+        $employeModel = new \Model\Employes();
+        if (method_exists($employeModel, 'getEnumValues')) {
+            $roles = $employeModel->getEnumValues('role_service');
+        }
+    } catch (\Exception $e) {
+        error_log("Erreur récupération rôles: " . $e->getMessage());
+    }
+
+    $data['dossier']  = $dossier_data;
+    $data['services'] = $services_disponibles;
+    $data['roles']    = $roles;
 
     $this->view('envoyer_dossier', $data);
 }
+
+
+/**
+ * VERIT_FICATION DE L'ENVOIE EXISTANTE
+ */
+/*
+    public function check_envoi_existant()
+    {
+        $req = new Request();
+        $envoiModel = new \Model\EnvoiDossiers();
+
+        $dossier_id = $req->post('dossier_id');
+        $service_id = $req->post('service_id');
+        $role_service = $req->post('role_service');
+        $type_envoi = $req->post('type_envoi');
+
+        $conditions = [
+            'dossier_id' => $dossier_id,
+            'service_id' => $service_id,
+            'type_envoi' => $type_envoi,
+            'est_actif' => true
+        ];
+
+        if ($type_envoi === 'ROLE_SERVICE') {
+            $conditions['role_service'] = $role_service;
+        }
+
+        $existe = $envoiModel->first($conditions);
+
+        header('Content-Type: application/json');
+        echo json_encode(['exists' => $existe ? true : false]);
+        exit;
+    }
+*/
+
+
 
 /**
  * Retirer un envoi de dossier

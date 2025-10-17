@@ -402,9 +402,7 @@
         text-align: left; /* 👈 force l’alignement de base à gauche */
         word-wrap: break-word;
     }
-    p {
-        margin: 0 0 1em 0;
-    }
+    
 
 </style>
 
@@ -419,7 +417,7 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                        <?= message('', $error) ?>
+                        <?= message('', true) ?>
                     </p>
                 </div>
             </div>
