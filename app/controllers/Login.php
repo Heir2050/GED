@@ -38,7 +38,7 @@ class Login
 					
 					$ses->auth($row);
 					 // Mettre à jour dernière connexion et historiser
-					 $this->updateLastLogin($row->id);
+					$this->updateLastLogin($row->id);
 					 
 					redirect('home');
 				}

@@ -47,7 +47,7 @@
 
 
 </head>
-<body x-data="{ open: false, page: 'ecommerce', 'loaded': true, 'darkMode': false, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false, 'dropdown': false, pageName: `Upload Files`, showCreateFolder: false, openDelete: false, 'isProfileInfoModal': false, 'DemandeConges': false, 'DemandeFichier': false }" x-init=" darkMode = JSON.parse(localStorage.getItem('darkMode')); $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(value))); window.addEventListener('opendelete', e => openDelete = e.detail.id);" :class="{'dark bg-gray-900': darkMode === true}" style="position: relative;">
+<body x-data="{ open: false, page: 'ecommerce', 'loaded': true, 'darkMode': false, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false, 'dropdown': false, pageName: `Upload Files`, showCreateFolder: false, openDelete: false, 'isProfileInfoModal': false, 'DemandeConges': false, 'DemandeFichier': false, 'isProfileInfoModal ': false }" x-init=" darkMode = JSON.parse(localStorage.getItem('darkMode')); $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(value))); window.addEventListener('opendelete', e => openDelete = e.detail.id);" :class="{'dark bg-gray-900': darkMode === true}" style="position: relative;">
     <!-- ===== Preloader Start ===== -->
     <div x-show="loaded" x-init="window.addEventListener('DOMContentLoaded', () => {setTimeout(() => loaded = false, 500)})" class="fixed left-0 top-0 z-999999 flex h-screen w-screen items-center justify-center bg-white dark:bg-black">
         <div class="h-16 w-16 animate-spin rounded-full border-4 border-solid border-brand-500 border-t-transparent"></div>

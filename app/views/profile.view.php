@@ -76,15 +76,39 @@
                                         Date de creation
                                     </p>
                                     <p class="text-sm font-medium text-gray-800 dark:text-white/90" >
-                                        <?= esc($row->date_creation ?? '') ?>
+                                        <?php
+                                            $formatter = new IntlDateFormatter(
+                                                'fr_FR',                         // locale
+                                                IntlDateFormatter::LONG,        // date format
+                                                IntlDateFormatter::SHORT,       // time format
+                                                'Europe/Paris',                 // timezone
+                                                IntlDateFormatter::GREGORIAN,   // calendar
+                                                "d MMMM yyyy 'à' HH:mm"         // pattern personnalisé
+                                            );
+
+                                            $date = new DateTime($row->date_creation);
+                                            echo $formatter->format($date);
+                                        ?>
                                     </p>
                                 </div>
                                 <div>
                                     <p class="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400" >
-                                        Connexion precedente
+                                        Connexion précédente
                                     </p>
                                     <p class="text-sm font-medium text-gray-800 dark:text-white/90" >
-                                        <?= esc($row->derniere_connexion ?? '') ?>
+                                        <?php
+                                            $formatter = new IntlDateFormatter(
+                                                'fr_FR',                         // locale
+                                                IntlDateFormatter::LONG,        // date format
+                                                IntlDateFormatter::SHORT,       // time format
+                                                'Europe/Paris',                 // timezone
+                                                IntlDateFormatter::GREGORIAN,   // calendar
+                                                "d MMMM yyyy 'à' HH:mm"         // pattern personnalisé
+                                            );
+
+                                            $date = new DateTime($row->derniere_connexion);
+                                            echo $formatter->format($date);
+                                        ?>
                                     </p>
                                 </div>
                             </div>
@@ -122,7 +146,7 @@
                 </p>
             </div>
             <!-- Dans la partie formulaire du modal, remplacez par : -->
-            <form class="flex flex-col" method="post" enctype="multipart/form-data">
+            <form class="flex flex-col" method="post" action="<?= ROOT ?>/profile" enctype="multipart/form-data">
                 <div class="custom-scrollbar h-[450px] overflow-y-auto px-2">
                     <div class="mt-0 gap-y-5">
                         <div class="col-span-2 lg:col-span-1 mb-6">

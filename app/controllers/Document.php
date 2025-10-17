@@ -900,9 +900,6 @@ public function envoyer($dossier_id = null)
                 $destinataire = "Rôle: $role_dest dans Service: $nom_service_dest";
             }
             
-            // CORRECTION : Debug pour vérifier les données
-            error_log("Envoi dossier - Dossier: {$dossier_data->nom}, Destinataire: $destinataire, Employé: {$employe->id}");
-            
             // ENREGISTRER L'ACTION - CORRECTION : Vérifier le résultat
             $action_result = $this->enregistrerAction(
                 'ENVOI_DOSSIER', 
@@ -910,9 +907,6 @@ public function envoyer($dossier_id = null)
                 null,
                 $dossier_id
             );
-            
-            // CORRECTION : Log du résultat de l'enregistrement
-            error_log("Résultat enregistrement action: " . ($action_result ? 'SUCCÈS' : 'ÉCHEC'));
             
             message("Dossier envoyé avec succès");
         } else {

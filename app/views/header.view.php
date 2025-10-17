@@ -259,11 +259,14 @@
             <div class="relative" x-data="{ dropdownOpen: false }" @click.outside="dropdownOpen = false">
                 <a class="flex items-center text-gray-700 dark:text-gray-400" href="#" @click.prevent="dropdownOpen = ! dropdownOpen">
                     <span class="mr-3 h-11 w-11 overflow-hidden rounded-full">
-                        <img src="<?= get_image($ses->user('image'), 'user') ?>" alt="User" class="object-cover" />
+                        <img src="<?= get_image($ses->user('photo'), 'user') ?>" alt="User" class="object-cover" />
                     </span>
 
                     <?php if ($ses->is_logged_in()) : ?>
-                        <span class="text-theme-sm mr-1 block font-medium"><?= ucfirst($ses->user('nom')) ?></span>
+                        <div style="line-height: 0;">
+                            <div class="text-theme-sm mr-1  font-medium"><?= ucfirst($ses->user('nom')) ?></div>
+                            <span class="text-theme-sm mr-1  font-medium"><?=  ucfirst(strtolower($ses->user('role'))) ?></span>
+                        </div>
                     <?php endif; ?>
 
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">

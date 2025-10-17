@@ -392,6 +392,20 @@
         color: white;
         border-color: #3b82f6;
     }
+    .content {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        line-height: 1.6;
+        min-height: 400px;
+        text-align: left; /* 👈 force l’alignement de base à gauche */
+        word-wrap: break-word;
+    }
+    p {
+        margin: 0 0 1em 0;
+    }
+
 </style>
 
 <main>
@@ -405,7 +419,7 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                        <?= message('', true) ?>
+                        <?= message('', $error) ?>
                     </p>
                 </div>
             </div>
@@ -557,11 +571,6 @@
                                 </th>
                                 <th class="px-5 py-3 font-normal whitespace-nowrap sm:px-6">
                                     <div class="flex items-center">
-                                        <p class="text-theme-sm text-gray-500 dark:text-gray-400">Taille</p>
-                                    </div>
-                                </th>
-                                <th class="px-5 py-3 font-normal whitespace-nowrap sm:px-6">
-                                    <div class="flex items-center">
                                         <p class="text-theme-sm text-gray-500 dark:text-gray-400">Date d'upload</p>
                                     </div>
                                 </th>
@@ -649,25 +658,32 @@
                                         <span class="block text-sm">
                                             <?= !empty($item->type) ? esc($item->type) : strtoupper($extension) ?>
                                             <?php if ($is_word_file): ?>
-                                                <span class="text-xs text-blue-500">(Word)</span>
+                                                <span class="text-xs text-blue-500"></span>
                                             <?php elseif ($is_excel_file): ?>
-                                                <span class="text-xs text-green-500">(Excel)</span>
+                                                <span class="text-xs text-green-500"></span>
                                             <?php elseif ($is_powerpoint_file): ?>
-                                                <span class="text-xs text-orange-500">(PowerPoint)</span>
+                                                <span class="text-xs text-orange-500"></span>
                                             <?php endif; ?>
-                                        </span>
-                                    </td>
-
-                                    <!-- Taille -->
-                                    <td class="px-5 py-3 whitespace-nowrap sm:px-6">
-                                        <span class="block text-sm">
-                                            <?= !empty($item->taille) ? formatFileSize($item->taille) : 'N/A' ?>
                                         </span>
                                     </td>
 
                                     <!-- Date d'upload -->
                                     <td class="px-5 py-3 whitespace-nowrap sm:px-6">
-                                        <span class="block text-sm"><?= date('d/m/Y H:i', strtotime($item->date_upload)) ?></span>
+                                        <span class="block text-sm">
+                                            <?php
+                                                $formatter = new IntlDateFormatter(
+                                                    'fr_FR',                         // locale
+                                                    IntlDateFormatter::LONG,        // date format
+                                                    IntlDateFormatter::SHORT,       // time format
+                                                    'Europe/Paris',                 // timezone
+                                                    IntlDateFormatter::GREGORIAN,   // calendar
+                                                    "d MMMM yyyy 'à' HH:mm"         // pattern personnalisé
+                                                );
+
+                                                $date = new DateTime($item->date_upload);
+                                                echo $formatter->format($date);
+                                            ?>
+                                        </span>
                                     </td>
                                     
                                     <!-- Colonne Actions -->
@@ -1017,6 +1033,21 @@ function openWordDocument(documentId, filename) {
                 .download-btn { padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; margin-right: 10px; }
                 .spinner { border: 4px solid #f3f4f6; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
                 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                .content {
+                    background: white;
+                    padding: 30px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    line-height: 1.6;
+                    min-height: 400px;
+                    text-align: left;
+                    word-wrap: break-word;
+                }
+
+                p.align-center { text-align: center; }
+                p.align-right { text-align: right; }
+                p.align-justify { text-align: justify; }
+
             </style>
         </head>
         <body>
@@ -1352,4 +1383,4 @@ function formatFileSize(bytes) {
 </script>
 
 
-<?php $this->view("footer"); ?>0
+<?php $this->view("footer"); ?>

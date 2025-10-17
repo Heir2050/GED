@@ -343,7 +343,7 @@
                                                 <div class="flex items-center">
                                                     <div class="flex items-center gap-3">
                                                         <div class="w-10 h-10 overflow-hidden rounded-full">
-                                                            <img src="<?= get_image(!empty($row->image) ? $row->image : '') ?>" alt="brand"  style="height: 100%;object-fit:cover;">
+                                                            <img src="<?= get_image(!empty($row->photo) ? $row->photo : '') ?>" alt="brand"  style="height: 100%;object-fit:cover;">
                                                         </div>
 
                                                         <div>
