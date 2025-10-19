@@ -231,11 +231,15 @@ class Dossiers
      * Récupérer les dossiers visibles pour un utilisateur avec le nombre de documents
      */
 
+    /**
+     * Récupérer les dossiers visibles pour un utilisateur avec le nombre de documents
+     */
     public function getDossiersVisibles($employe_id, $service_id, $role_service)
     {
         $envoiModel = new EnvoiDossiers();
         $documentModel = new Documents();
         
+        // Récupérer les dossiers reçus (par service ET par rôle)
         $dossiersRecus = $envoiModel->getDossiersRecus($employe_id, $service_id, $role_service);
         
         // Dossiers internes du service
@@ -244,14 +248,17 @@ class Dossiers
             'est_envoye' => false,
             'est_archive' => false
         ]);
-    
+
         // Fusionner les résultats et ajouter le nombre de documents
         $dossiersVisibles = [];
-    
+
         // Traiter les dossiers internes
         if ($dossiersInternes) {
             foreach ($dossiersInternes as $dossier) {
                 $dossier->origine = 'INTERNE';
+                $dossier->type_envoi = null;
+                $dossier->role_service = null;
+                $dossier->service_destinataire = null;
                 $dossier->nb_documents = $documentModel->query(
                     "SELECT COUNT(*) as count FROM documents WHERE dossier_id = :dossier_id",
                     ['dossier_id' => $dossier->id]
@@ -259,11 +266,16 @@ class Dossiers
                 $dossiersVisibles[] = $dossier;
             }
         }
-    
+
         // Traiter les dossiers reçus
         if ($dossiersRecus) {
             foreach ($dossiersRecus as $dossier) {
                 $dossier->origine = 'EXTERNE';
+                // Les informations d'envoi sont déjà dans le résultat de la requête
+                $dossier->type_envoi = $dossier->type_envoi ?? null;
+                $dossier->role_service = $dossier->role_service ?? null;
+                $dossier->service_destinataire = $dossier->service_destinataire ?? null;
+                
                 $dossier->nb_documents = $documentModel->query(
                     "SELECT COUNT(*) as count FROM documents WHERE dossier_id = :dossier_id",
                     ['dossier_id' => $dossier->id]
@@ -271,14 +283,14 @@ class Dossiers
                 $dossiersVisibles[] = $dossier;
             }
         }
-    
+
         // TRIER LES DOSSIERS PAR DATE DE CRÉATION (du plus récent au plus ancien)
         usort($dossiersVisibles, function($a, $b) {
             $dateA = strtotime($a->date_creation);
             $dateB = strtotime($b->date_creation);
             return $dateB - $dateA; // Ordre décroissant (plus récent en premier)
         });
-    
+
         return $dossiersVisibles;
     }
 

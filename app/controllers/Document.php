@@ -55,6 +55,15 @@ class Document
             $employe->role_service
         );
 
+        // Déterminer le type d'accès pour chaque dossier
+        foreach ($dossiers as $dossier_item) {
+            $dossier_item->type_acces = $this->determinerTypeAcces(
+                $dossier_item, 
+                $employe->service_id, 
+                $employe->role_service
+            );
+        }
+
         // Trier les dossiers par date de création (du plus récent au plus ancien)
         if (!empty($dossiers)) {
             usort($dossiers, function($a, $b) {
@@ -1006,7 +1015,7 @@ public function retirer_envoi($envoi_id = null)
  * Vérifier l'accès à un dossier - CORRIGÉ
  */
 /**
- * Vérifier l'accès à un dossier - Version simplifiée
+ * Vérifier l'accès à un dossier - Version corrigée pour ROLE_SERVICE
  */
 private function verifierAccesDossier($dossier_id, $employe_id, $service_id, $role_service)
 {
@@ -1025,7 +1034,7 @@ private function verifierAccesDossier($dossier_id, $employe_id, $service_id, $ro
         return true;
     }
     
-    // Vérifier les envois avec une requête directe qui gère correctement les NULL
+    // Vérifier les envois avec une requête qui gère ROLE_SERVICE
     $query = "
         SELECT COUNT(*) as count 
         FROM envoidossiers ed
@@ -1033,18 +1042,21 @@ private function verifierAccesDossier($dossier_id, $employe_id, $service_id, $ro
         WHERE ed.dossier_id = :dossier_id
         AND ed.est_actif = true
         AND d.est_archive = false
-        AND ed.service_id = :service_id
         AND (
-            (ed.type_envoi = 'SERVICE' AND ed.role_service IS NULL)
+            -- Envoi par service
+            (ed.type_envoi = 'SERVICE' AND ed.service_id = :service_id)
             OR 
-            (ed.type_envoi = 'ROLE_SERVICE' AND ed.role_service = :role_service)
+            -- Envoi par rôle (service_id peut être NULL ou correspondre)
+            (ed.type_envoi = 'ROLE_SERVICE' AND ed.role_service = :role_service 
+             AND (ed.service_id IS NULL OR ed.service_id = :service_id2))
         )
     ";
     
     $result = $envoiModel->query($query, [
         'dossier_id' => $dossier_id,
         'service_id' => $service_id,
-        'role_service' => $role_service
+        'role_service' => $role_service,
+        'service_id2' => $service_id
     ]);
     
     return ($result && $result[0]->count > 0);
@@ -1536,6 +1548,29 @@ private function getFileViewingMethod($document, $dossier)
     }
     
     return $info;
+}
+
+/**
+ * Déterminer le type d'accès pour un dossier
+ */
+private function determinerTypeAcces($dossier, $service_id, $role_service)
+{
+    // Dossier interne
+    if ($dossier->origine == 'INTERNE') {
+        return 'interne';
+    }
+    
+    // Dossier externe reçu par service
+    if ($dossier->origine == 'EXTERNE' && $dossier->type_envoi == 'SERVICE') {
+        return 'envoye_service';
+    }
+    
+    // Dossier externe reçu par rôle
+    if ($dossier->origine == 'EXTERNE' && $dossier->type_envoi == 'ROLE_SERVICE') {
+        return 'envoye_role';
+    }
+    
+    return 'autre';
 }
 
 

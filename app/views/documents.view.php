@@ -402,6 +402,11 @@
         text-align: left; /* 👈 force l’alignement de base à gauche */
         word-wrap: break-word;
     }
+
+    /* Dans votre fichier CSS principal */
+    .badge-interne { background-color: #dbeafe; color: #1e40af; }
+    .badge-service { background-color: #d1fae5; color: #065f46; }
+    .badge-role { background-color: #ffedd5; color: #9a3412; }  
     
 
 </style>
@@ -806,10 +811,22 @@
                                         <?= $dossier_item->nb_documents ?> fichier(s)
                                     </div>
                                     <div class="dossier-date">
-                                        <?= date('d/m/Y', strtotime($dossier_item->date_creation)) ?>
-                                        <?php if (isset($dossier_item->origine) && $dossier_item->origine == 'EXTERNE'): ?>
-                                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs ml-2">
-                                                Reçu
+                                        
+                                        <?php if ($dossier_item->type_acces == 'interne'): ?>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                📁 Interne
+                                            </span>
+                                        <?php elseif ($dossier_item->type_acces == 'envoye_service'): ?>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                🏢 Reçu (Service)
+                                            </span>
+                                        <?php elseif ($dossier_item->type_acces == 'envoye_role'): ?>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                                👤 Reçu (Rôle: <?= esc($dossier_item->role_service) ?>)
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                📨 Reçu
                                             </span>
                                         <?php endif; ?>
                                     </div>

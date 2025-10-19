@@ -233,22 +233,29 @@ class EnvoiDossiers
     /**
      * Récupérer les dossiers envoyés à un utilisateur
      */
+    /**
+     * Récupérer les dossiers envoyés à un utilisateur
+     */
     public function getDossiersRecus($employe_id, $service_id, $role_service)
     {
         $query = "
             SELECT DISTINCT d.*, ed.type_envoi, ed.date_envoi, 
-                   e.nom as envoyeur_nom, e.prenom as envoyeur_prenom
+                e.nom as envoyeur_nom, e.prenom as envoyeur_prenom,
+                ed.role_service, ed.service_id as service_destinataire,
+                s.nom as service_destinataire_nom
             FROM dossiers d
             JOIN envoidossiers ed ON d.id = ed.dossier_id
             JOIN employes e ON ed.envoyeur_id = e.id
+            LEFT JOIN services s ON ed.service_id = s.id  -- LEFT JOIN pour gérer les NULL
             WHERE ed.est_actif = true 
             AND d.est_archive = false
             AND (
-                -- Envoi par service
+                -- Envoi par service (tous les employés du service)
                 (ed.type_envoi = 'SERVICE' AND ed.service_id = :service_id)
                 OR 
-                -- Envoi par rôle
-                (ed.type_envoi = 'ROLE_SERVICE' AND ed.role_service = :role_service AND ed.service_id = :service_id2)
+                -- Envoi par rôle (seulement les employés avec ce rôle)
+                (ed.type_envoi = 'ROLE_SERVICE' AND ed.role_service = :role_service 
+                AND (ed.service_id = :service_id2 OR ed.service_id IS NULL))
             )
             ORDER BY ed.date_envoi DESC
         ";
@@ -291,5 +298,26 @@ class EnvoiDossiers
             'dossier_id' => $dossier_id,
             'est_actif' => true
         ]);
+    }
+
+    /**
+     * Récupérer les envois actifs avec informations détaillées
+     */
+    public function getEnvoisActifsDetails($dossier_id)
+    {
+        $query = "
+            SELECT ed.*, 
+                s.nom as service_nom,
+                e.nom as envoyeur_nom, 
+                e.prenom as envoyeur_prenom
+            FROM envoidossiers ed
+            LEFT JOIN services s ON ed.service_id = s.id
+            JOIN employes e ON ed.envoyeur_id = e.id
+            WHERE ed.dossier_id = :dossier_id 
+            AND ed.est_actif = true
+            ORDER BY ed.date_envoi DESC
+        ";
+
+        return $this->query($query, ['dossier_id' => $dossier_id]);
     }
 }
