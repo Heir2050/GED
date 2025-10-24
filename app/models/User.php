@@ -23,6 +23,7 @@ class User
 		'uploader_id',
 		'password',
 		'role',
+		'role_service',
 		'est_actif',
 		'service_id',
 		'date_creation',
@@ -87,6 +88,39 @@ class User
 		)";
 
 		$this->query($query);
+	}
+
+
+
+	
+	/**
+	 * Récupérer les valeurs disponibles de l'ENUM role_service
+	 */
+	public function getRoleServiceValues()
+	{
+		try {
+			// Méthode 1: Requête SQL directe pour récupérer les valeurs ENUM
+			$query = "SHOW COLUMNS FROM employes WHERE Field = 'role_service'";
+			$result = $this->query($query);
+			
+			if ($result && !empty($result[0])) {
+				$type = $result[0]->Type;
+				// Extraire les valeurs de l'ENUM
+				preg_match("/^enum\(\'(.*)\'\)$/", $type, $matches);
+				if (!empty($matches[1])) {
+					$enum_values = explode("','", $matches[1]);
+					return $enum_values;
+				}
+			}
+			
+			// Méthode 2: Valeurs par défaut si la requête échoue
+			// return ['EMPLOYE', 'CHEF_SERVICE', 'ADMIN_SERVICE'];
+			
+		} catch (\Exception $e) {
+			return("Erreur récupération ENUM: " . $e->getMessage());
+			// Valeurs par défaut en cas d'erreur
+			// return ['EMPLOYE', 'CHEF_SERVICE', 'ADMIN_SERVICE'];
+		}
 	}
 }
 

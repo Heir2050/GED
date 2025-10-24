@@ -13,7 +13,7 @@
         </div>
         <!-- Breadcrumb End -->
 
-        <div class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+        <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
             <?php if (!empty($historique)): ?>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -51,10 +51,10 @@
                                     <?php endif; ?>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <?php
-                                        // Utiliser type_action_code au lieu de type_action
-                                        $action_code = $action->type_action_code ?? '';
-                                        $action_label = $action_labels[$action_code] ?? $action_code;
-                                        $action_class = $action_classes[$action_code] ?? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+                                            // Utiliser type_action_code au lieu de type_action
+                                            $action_code = $action->type_action_code ?? '';
+                                            $action_label = $action_labels[$action_code] ?? $action_code;
+                                            $action_class = $action_classes[$action_code] ?? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
                                         ?>
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= $action_class ?>">
                                             <?= htmlspecialchars($action_label) ?>
@@ -76,7 +76,19 @@
                                         <?php endif; ?>
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        <?= date('d/m/Y H:i', strtotime($action->date_action)) ?>
+                                        <?php
+                                            $formatter = new IntlDateFormatter(
+                                                'fr_FR',                         // locale
+                                                IntlDateFormatter::LONG,        // date format
+                                                IntlDateFormatter::SHORT,       // time format
+                                                'Europe/Paris',                 // timezone
+                                                IntlDateFormatter::GREGORIAN,   // calendar
+                                                "d MMMM yyyy 'à' HH:mm"         // pattern personnalisé
+                                            );
+
+                                            $date = new DateTime($action->date_action);
+                                            echo $formatter->format($date);
+                                        ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

@@ -556,9 +556,8 @@
                 <?php endif; ?>
             </div>
             
-            
             <?php if (!empty($documents)): ?>
-                <div class="rounded-2xl bg-white p-6">
+                <div class="rounded-2xl bg-white">
                     <table class="min-w-full">
                         <thead class="border-y border-gray-100 py-3 dark:border-gray-800">
                             <tr>
@@ -574,7 +573,7 @@
                                 </th>
                                 <th class="px-5 py-3 font-normal whitespace-nowrap sm:px-6">
                                     <div class="flex items-center">
-                                        <p class="text-theme-sm text-gray-500 dark:text-gray-400">Date d'upload</p>
+                                        <p class="text-theme-sm text-gray-500 dark:text-gray-400">Date&nbsp;de&nbsp;création</p>
                                     </div>
                                 </th>
                                 <th class="px-5 py-3 font-normal whitespace-nowrap sm:px-6">
@@ -765,6 +764,27 @@
                         </button>
                     </nav>
                 </div>
+                <!-- Recherche spécifique aux documents -->
+                <!-- <div class="mb-6">
+                    <form method="GET" action="<?= ROOT ?>/document" class="flex gap-3">
+                        <input type="hidden" name="dossier_id" value="<?= $dossier_courant->id ?? '' ?>">
+                        <input 
+                            type="text" 
+                            name="search" 
+                            value="<?= htmlspecialchars($_GET['search'] ?? '') ?>" 
+                            placeholder="Rechercher dans les documents..." 
+                            class="flex-1 h-11 rounded-lg border border-gray-300 px-4 text-sm focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10"
+                        />
+                        <button type="submit" class="h-11 px-6 bg-brand-500 text-white rounded-lg hover:bg-brand-600">
+                            Rechercher
+                        </button>
+                        <?php if (!empty($_GET['search'])): ?>
+                            <a href="<?= ROOT ?>/document<?= isset($dossier_courant) ? '?dossier_id=' . $dossier_courant->id : '' ?>" class="h-11 px-6 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex items-center">
+                                ✕
+                            </a>
+                        <?php endif; ?>
+                    </form>
+                </div> -->
             </div>
             <!-- Affichage de la liste des dossiers -->
             <!-- Affichage de la liste des dossiers -->
@@ -775,8 +795,14 @@
                             <div class="dossier-card" onclick="window.location='<?= ROOT ?>/document?dossier_id=<?= $dossier_item->id ?>'">
                                 <div class="flex items-center justify-between">
                                     <div class="dossier-icon">
-                                        <svg viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/>
+                                        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 100%;height:100%;">
+                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M13.3986 4.40674C12.9265 3.77722 12.1855 3.40674 11.3986 3.40674H2.5C1.11929 3.40674 0 4.52602 0 5.90674V30.0959C0 31.4766 1.11929 32.5959 2.5 32.5959H33.5C34.8807 32.5959 36 31.4766 36 30.0959V11.7446C36 10.3639 34.8807 9.24458 33.5 9.24458H18.277C17.4901 9.24458 16.7492 8.87409 16.277 8.24458L13.3986 4.40674Z" fill="url(#paint0_linear_2816_28044)"></path>
+                                            <defs>
+                                                <linearGradient id="paint0_linear_2816_28044" x1="18" y1="3.40674" x2="18" y2="32.5959" gradientUnits="userSpaceOnUse">
+                                                    <stop stop-color="#FFDC78"></stop>
+                                                    <stop offset="1" stop-color="#FBBC1A"></stop>
+                                                </linearGradient>
+                                            </defs>
                                         </svg>
                                     </div>
 
@@ -808,24 +834,25 @@
                                 
                                 <div class="dossier-info">
                                     <div class="document-count">
-                                        <?= $dossier_item->nb_documents ?> fichier(s)
+                                        <?= $dossier_item->nb_documents ?>&nbsp;fichier(s)
                                     </div>
                                     <div class="dossier-date">
                                         
                                         <?php if ($dossier_item->type_acces == 'interne'): ?>
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            <span class="inline-flex items-center rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                                 📁 Interne
                                             </span>
                                         <?php elseif ($dossier_item->type_acces == 'envoye_service'): ?>
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="inline-flex items-center rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                 🏢 Reçu (Service)
                                             </span>
                                         <?php elseif ($dossier_item->type_acces == 'envoye_role'): ?>
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                                👤 Reçu (Rôle: <?= esc($dossier_item->role_service) ?>)
+                                            <span class="inline-flex items-center rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                                <!-- 👤 Reçu (fonction: <?= esc($dossier_item->role_service) ?>) -->
+                                                Reçu (fonction)
                                             </span>
                                         <?php else: ?>
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            <span class="inline-flex items-center rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                                                 📨 Reçu
                                             </span>
                                         <?php endif; ?>
@@ -839,7 +866,7 @@
                     <?php if (isset($pagination) && $pagination['totalDossiers'] > 0): ?>
                         <div class="mt-8 flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6">
                             <!-- Informations sur la pagination -->
-                            <div class="sm:flex-1 sm:items-center sm:justify-between">
+                            <div class="flex-1 items-center justify-between w-full">
                                 <!-- <div>
                                     <p class="text-sm text-gray-700">
                                         Affichage des dossiers 
@@ -1023,378 +1050,378 @@
 </div>
 
 <script>
-// ========== FONCTIONS POUR WORD ==========
-// ========== FONCTIONS POUR WORD ==========
-function openWordDocument(documentId, filename) {
-    const fileUrl = '<?= ROOT ?>/document/servir_fichier/' + documentId;
-    const features = 'width=1200,height=800,scrollbars=yes,resizable=yes,left=100,top=100';
-    const newWindow = window.open('', `word_${Date.now()}`, features);
+    // ========== FONCTIONS POUR WORD ==========
+    // ========== FONCTIONS POUR WORD ==========
+    function openWordDocument(documentId, filename) {
+        const fileUrl = '<?= ROOT ?>/document/servir_fichier/' + documentId;
+        const features = 'width=1200,height=800,scrollbars=yes,resizable=yes,left=100,top=100';
+        const newWindow = window.open('', `word_${Date.now()}`, features);
 
-    newWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>${filename} - Word Viewer</title>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"><\/script>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f8fafc; }
-                .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-                .content { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); line-height: 1.6; min-height: 400px; }
-                table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-                table, th, td { border: 1px solid #ddd; padding: 8px; }
-                .loading { text-align: center; padding: 50px; color: #6b7280; }
-                .error { text-align: center; padding: 50px; color: #ef4444; }
-                .close-btn { padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
-                .download-btn { padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; margin-right: 10px; }
-                .spinner { border: 4px solid #f3f4f6; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                .content {
-                    background: white;
-                    padding: 30px;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    line-height: 1.6;
-                    min-height: 400px;
-                    text-align: left;
-                    word-wrap: break-word;
-                }
-
-                p.align-center { text-align: center; }
-                p.align-right { text-align: right; }
-                p.align-justify { text-align: justify; }
-
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1 style="margin: 0; color: #1f2937;">📄 ${filename}</h1>
-                <div>
-                    <button class="download-btn" onclick="window.open('${fileUrl}')">📥 Télécharger</button>
-                    <button class="close-btn" onclick="window.close()">✕ Fermer</button>
-                </div>
-            </div>
-            <div id="content" class="loading">
-                <div class="spinner"></div>
-                <p>Chargement du document Word...</p>
-            </div>
-            <script>
-                console.log('Début du chargement Word...');
-                loadWordDocument('${fileUrl}');
-
-                async function loadWordDocument(fileUrl) {
-                    try {
-                        console.log('Tentative de chargement:', fileUrl);
-                        const response = await fetch(fileUrl);
-                        if (!response.ok) throw new Error('Erreur HTTP: ' + response.status);
-
-                        const arrayBuffer = await response.arrayBuffer();
-                        console.log('Fichier chargé, conversion en cours...');
-
-                        const result = await mammoth.convertToHtml({ arrayBuffer });
-                        console.log('Conversion réussie');
-
-                        document.getElementById('content').innerHTML = 
-                            '<div class="content">' + result.value + '</div>';
-                    } catch (error) {
-                        console.error('Erreur:', error);
-                        document.getElementById('content').innerHTML = \`
-                            <div class="error">
-                                <h3>❌ Erreur de chargement</h3>
-                                <p>Impossible d'afficher le document Word.</p>
-                                <small>\${error.message}</small><br><br>
-                                <button class="download-btn" onclick="window.open('\${fileUrl}')">📥 Télécharger le document</button>
-                            </div>
-                        \`;
+        newWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${filename} - Word Viewer</title>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"><\/script>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f8fafc; }
+                    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                    .content { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); line-height: 1.6; min-height: 400px; }
+                    table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+                    table, th, td { border: 1px solid #ddd; padding: 8px; }
+                    .loading { text-align: center; padding: 50px; color: #6b7280; }
+                    .error { text-align: center; padding: 50px; color: #ef4444; }
+                    .close-btn { padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+                    .download-btn { padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; margin-right: 10px; }
+                    .spinner { border: 4px solid #f3f4f6; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                    .content {
+                        background: white;
+                        padding: 30px;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        line-height: 1.6;
+                        min-height: 400px;
+                        text-align: left;
+                        word-wrap: break-word;
                     }
-                }
-            <\/script>
-        </body>
-        </html>
-    `);
-}
 
+                    p.align-center { text-align: center; }
+                    p.align-right { text-align: right; }
+                    p.align-justify { text-align: justify; }
 
-// ========== FONCTIONS POUR EXCEL ==========
-// ========== FONCTIONS POUR EXCEL ==========
-function openExcelDocument(documentId, filename) {
-    const fileUrl = '<?= ROOT ?>/document/servir_fichier/' + documentId;
-    const features = 'width=1400,height=800,scrollbars=yes,resizable=yes,left=100,top=100';
-    const newWindow = window.open('', `excel_${Date.now()}`, features);
-
-    newWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>${filename} - Excel Viewer</title>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f8fafc; }
-                .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-                .sheet { margin-bottom: 30px; background: white; padding: 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden; }
-                .sheet-title { background: #10b981; color: white; padding: 15px; margin: 0; font-weight: bold; font-size: 16px; }
-                table { border-collapse: collapse; width: 100%; font-size: 14px; }
-                th { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; font-weight: 600; text-align: left; }
-                td { border: 1px solid #e2e8f0; padding: 10px; min-width: 80px; }
-                tr:nth-child(even) { background: #f8fafc; }
-                .loading { text-align: center; padding: 50px; color: #6b7280; }
-                .error { text-align: center; padding: 50px; color: #ef4444; }
-                .close-btn { padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
-                .download-btn { padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; margin-right: 10px; }
-                .spinner { border: 4px solid #f3f4f6; border-top: 4px solid #10b981; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1 style="margin: 0; color: #1f2937;">📊 ${filename}</h1>
-                <div>
-                    <button class="download-btn" onclick="window.open('${fileUrl}')">📥 Télécharger</button>
-                    <button class="close-btn" onclick="window.close()">✕ Fermer</button>
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1 style="margin: 0; color: #1f2937;">📄 ${filename}</h1>
+                    <div>
+                        <button class="download-btn" onclick="window.open('${fileUrl}')">📥 Télécharger</button>
+                        <button class="close-btn" onclick="window.close()">✕ Fermer</button>
+                    </div>
                 </div>
-            </div>
-            <div id="content" class="loading">
-                <div class="spinner"></div>
-                <p>Chargement du fichier Excel...</p>
-            </div>
+                <div id="content" class="loading">
+                    <div class="spinner"></div>
+                    <p>Chargement du document Word...</p>
+                </div>
+                <script>
+                    console.log('Début du chargement Word...');
+                    loadWordDocument('${fileUrl}');
 
-            <script>
-                console.log('Début du chargement Excel...');
-                loadExcelDocument('${fileUrl}');
+                    async function loadWordDocument(fileUrl) {
+                        try {
+                            console.log('Tentative de chargement:', fileUrl);
+                            const response = await fetch(fileUrl);
+                            if (!response.ok) throw new Error('Erreur HTTP: ' + response.status);
 
-                async function loadExcelDocument(fileUrl) {
-                    try {
-                        console.log('Tentative de chargement:', fileUrl);
-                        const response = await fetch(fileUrl);
-                        if (!response.ok) throw new Error('Erreur HTTP: ' + response.status);
+                            const arrayBuffer = await response.arrayBuffer();
+                            console.log('Fichier chargé, conversion en cours...');
 
-                        const arrayBuffer = await response.arrayBuffer();
-                        console.log('Fichier chargé, traitement en cours...');
+                            const result = await mammoth.convertToHtml({ arrayBuffer });
+                            console.log('Conversion réussie');
 
-                        const data = new Uint8Array(arrayBuffer);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        console.log('Fichier Excel chargé avec', workbook.SheetNames.length, 'feuilles.');
+                            document.getElementById('content').innerHTML = 
+                                '<div class="content">' + result.value + '</div>';
+                        } catch (error) {
+                            console.error('Erreur:', error);
+                            document.getElementById('content').innerHTML = \`
+                                <div class="error">
+                                    <h3>❌ Erreur de chargement</h3>
+                                    <p>Impossible d'afficher le document Word.</p>
+                                    <small>\${error.message}</small><br><br>
+                                    <button class="download-btn" onclick="window.open('\${fileUrl}')">📥 Télécharger le document</button>
+                                </div>
+                            \`;
+                        }
+                    }
+                <\/script>
+            </body>
+            </html>
+        `);
+    }
 
-                        let html = '';
-                        workbook.SheetNames.forEach(sheetName => {
-                            const worksheet = workbook.Sheets[sheetName];
-                            const sheetHtml = XLSX.utils.sheet_to_html(worksheet, {
-                                editable: false,
-                                header: '',
-                                raw: true
+
+    // ========== FONCTIONS POUR EXCEL ==========
+    // ========== FONCTIONS POUR EXCEL ==========
+    function openExcelDocument(documentId, filename) {
+        const fileUrl = '<?= ROOT ?>/document/servir_fichier/' + documentId;
+        const features = 'width=1400,height=800,scrollbars=yes,resizable=yes,left=100,top=100';
+        const newWindow = window.open('', `excel_${Date.now()}`, features);
+
+        newWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${filename} - Excel Viewer</title>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f8fafc; }
+                    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                    .sheet { margin-bottom: 30px; background: white; padding: 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden; }
+                    .sheet-title { background: #10b981; color: white; padding: 15px; margin: 0; font-weight: bold; font-size: 16px; }
+                    table { border-collapse: collapse; width: 100%; font-size: 14px; }
+                    th { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; font-weight: 600; text-align: left; }
+                    td { border: 1px solid #e2e8f0; padding: 10px; min-width: 80px; }
+                    tr:nth-child(even) { background: #f8fafc; }
+                    .loading { text-align: center; padding: 50px; color: #6b7280; }
+                    .error { text-align: center; padding: 50px; color: #ef4444; }
+                    .close-btn { padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+                    .download-btn { padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; margin-right: 10px; }
+                    .spinner { border: 4px solid #f3f4f6; border-top: 4px solid #10b981; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1 style="margin: 0; color: #1f2937;">📊 ${filename}</h1>
+                    <div>
+                        <button class="download-btn" onclick="window.open('${fileUrl}')">📥 Télécharger</button>
+                        <button class="close-btn" onclick="window.close()">✕ Fermer</button>
+                    </div>
+                </div>
+                <div id="content" class="loading">
+                    <div class="spinner"></div>
+                    <p>Chargement du fichier Excel...</p>
+                </div>
+
+                <script>
+                    console.log('Début du chargement Excel...');
+                    loadExcelDocument('${fileUrl}');
+
+                    async function loadExcelDocument(fileUrl) {
+                        try {
+                            console.log('Tentative de chargement:', fileUrl);
+                            const response = await fetch(fileUrl);
+                            if (!response.ok) throw new Error('Erreur HTTP: ' + response.status);
+
+                            const arrayBuffer = await response.arrayBuffer();
+                            console.log('Fichier chargé, traitement en cours...');
+
+                            const data = new Uint8Array(arrayBuffer);
+                            const workbook = XLSX.read(data, { type: 'array' });
+                            console.log('Fichier Excel chargé avec', workbook.SheetNames.length, 'feuilles.');
+
+                            let html = '';
+                            workbook.SheetNames.forEach(sheetName => {
+                                const worksheet = workbook.Sheets[sheetName];
+                                const sheetHtml = XLSX.utils.sheet_to_html(worksheet, {
+                                    editable: false,
+                                    header: '',
+                                    raw: true
+                                });
+                                html += \`
+                                    <div class="sheet">
+                                        <div class="sheet-title">📊 \${sheetName}</div>
+                                        <div style="overflow-x:auto; padding:20px;">\${sheetHtml}</div>
+                                    </div>\`;
                             });
-                            html += \`
-                                <div class="sheet">
-                                    <div class="sheet-title">📊 \${sheetName}</div>
-                                    <div style="overflow-x:auto; padding:20px;">\${sheetHtml}</div>
-                                </div>\`;
-                        });
 
-                        document.getElementById('content').innerHTML = html;
-                        console.log('Affichage terminé avec succès.');
+                            document.getElementById('content').innerHTML = html;
+                            console.log('Affichage terminé avec succès.');
 
-                    } catch (error) {
-                        console.error('Erreur:', error);
-                        document.getElementById('content').innerHTML = \`
-                            <div class="error">
-                                <h3>❌ Erreur de chargement</h3>
-                                <p>Impossible d'afficher le fichier Excel.</p>
-                                <small>\${error.message}</small><br><br>
-                                <button class="download-btn" onclick="window.open('\${fileUrl}')">📥 Télécharger le fichier</button>
-                            </div>
-                        \`;
+                        } catch (error) {
+                            console.error('Erreur:', error);
+                            document.getElementById('content').innerHTML = \`
+                                <div class="error">
+                                    <h3>❌ Erreur de chargement</h3>
+                                    <p>Impossible d'afficher le fichier Excel.</p>
+                                    <small>\${error.message}</small><br><br>
+                                    <button class="download-btn" onclick="window.open('\${fileUrl}')">📥 Télécharger le fichier</button>
+                                </div>
+                            \`;
+                        }
                     }
-                }
-            <\/script>
-        </body>
-        </html>
-    `);
-}
-
-// ========== FONCTIONS UTILITAIRES ==========
-function cloturerDossier(dossierId) {
-    if (confirm('Êtes-vous sûr de vouloir clôturer ce dossier ? Cette action est définitive.')) {
-        window.location.href = '<?= ROOT ?>/document/cloturer_dossier/' + dossierId;
+                <\/script>
+            </body>
+            </html>
+        `);
     }
-}
 
-function archiverDossier(dossierId) {
-    if (confirm('Êtes-vous sûr de vouloir archiver ce dossier ? Il ne sera plus visible dans la liste principale.')) {
-        window.location.href = '<?= ROOT ?>/document/archiver_dossier/' + dossierId;
+    // ========== FONCTIONS UTILITAIRES ==========
+    function cloturerDossier(dossierId) {
+        if (confirm('Êtes-vous sûr de vouloir clôturer ce dossier ? Cette action est définitive.')) {
+            window.location.href = '<?= ROOT ?>/document/cloturer_dossier/' + dossierId;
+        }
     }
-}
 
-function formatFileSize(bytes) {
-    if (bytes === 0 || bytes === undefined) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
+    function archiverDossier(dossierId) {
+        if (confirm('Êtes-vous sûr de vouloir archiver ce dossier ? Il ne sera plus visible dans la liste principale.')) {
+            window.location.href = '<?= ROOT ?>/document/archiver_dossier/' + dossierId;
+        }
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0 || bytes === undefined) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
 </script>
 
 <!-- LA GESTION POUR AJOUTER UN FICHIER DANS UN DOSSIER EXISTANTES -->
 <script>
-// ========== INITIALISATION DES DEUX MODALS ==========
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialisation pour le modal de nouveau dossier
-    initializeFileUpload('fileUploadAreaNew', 'fileInputNew', 'filePreviewNew', 'filesCountNew', 'uploadStatusNew', 'fileLabelTextNew', 'defaultFileIconNew');
-    
-    // Initialisation pour le modal de dossier existant
-    initializeFileUpload('fileUploadAreaExisting', 'fileInputExisting', 'filePreviewExisting', 'filesCountExisting', 'uploadStatusExisting', 'fileLabelTextExisting', 'defaultFileIconExisting');
-});
-
-function initializeFileUpload(uploadAreaId, fileInputId, previewId, countId, statusId, labelTextId, fileIconId) {
-    const fileUploadArea = document.getElementById(uploadAreaId);
-    const fileInput = document.getElementById(fileInputId);
-    const filePreview = document.getElementById(previewId);
-    const filesCount = document.getElementById(countId);
-    const uploadStatus = document.getElementById(statusId);
-    const fileLabelText = document.getElementById(labelTextId);
-    const defaultFileIcon = document.getElementById(fileIconId);
-    
-    let selectedFiles = [];
-
-    if (!fileUploadArea || !fileInput) return;
-
-    // Événements de drag & drop
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        fileUploadArea.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-        fileUploadArea.addEventListener(eventName, () => {
-            fileUploadArea.classList.add('drag-over');
-        }, false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        fileUploadArea.addEventListener(eventName, () => {
-            fileUploadArea.classList.remove('drag-over');
-        }, false);
-    });
-
-    fileUploadArea.addEventListener('drop', handleDrop, false);
-    fileInput.addEventListener('change', handleFileSelect, false);
-
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        handleFiles(files);
-    }
-
-    function handleFileSelect(e) {
-        const files = e.target.files;
-        handleFiles(files);
-    }
-
-    function handleFiles(files) {
-        selectedFiles = Array.from(files);
-        updateFilePreview();
-        updateFilesCount();
+    // ========== INITIALISATION DES DEUX MODALS ==========
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialisation pour le modal de nouveau dossier
+        initializeFileUpload('fileUploadAreaNew', 'fileInputNew', 'filePreviewNew', 'filesCountNew', 'uploadStatusNew', 'fileLabelTextNew', 'defaultFileIconNew');
         
-        if (selectedFiles.length > 0) {
-            fileUploadArea.classList.add('has-files');
-            fileLabelText.textContent = `${selectedFiles.length} fichier(s) sélectionné(s)`;
-            defaultFileIcon.style.color = '#10b981';
-        } else {
+        // Initialisation pour le modal de dossier existant
+        initializeFileUpload('fileUploadAreaExisting', 'fileInputExisting', 'filePreviewExisting', 'filesCountExisting', 'uploadStatusExisting', 'fileLabelTextExisting', 'defaultFileIconExisting');
+    });
+
+    function initializeFileUpload(uploadAreaId, fileInputId, previewId, countId, statusId, labelTextId, fileIconId) {
+        const fileUploadArea = document.getElementById(uploadAreaId);
+        const fileInput = document.getElementById(fileInputId);
+        const filePreview = document.getElementById(previewId);
+        const filesCount = document.getElementById(countId);
+        const uploadStatus = document.getElementById(statusId);
+        const fileLabelText = document.getElementById(labelTextId);
+        const defaultFileIcon = document.getElementById(fileIconId);
+        
+        let selectedFiles = [];
+
+        if (!fileUploadArea || !fileInput) return;
+
+        // Événements de drag & drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileUploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileUploadArea.addEventListener(eventName, () => {
+                fileUploadArea.classList.add('drag-over');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileUploadArea.addEventListener(eventName, () => {
+                fileUploadArea.classList.remove('drag-over');
+            }, false);
+        });
+
+        fileUploadArea.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFileSelect, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            updateFilePreview();
+            updateFilesCount();
+            
+            if (selectedFiles.length > 0) {
+                fileUploadArea.classList.add('has-files');
+                fileLabelText.textContent = `${selectedFiles.length} fichier(s) sélectionné(s)`;
+                defaultFileIcon.style.color = '#10b981';
+            } else {
+                fileUploadArea.classList.remove('has-files');
+                fileLabelText.textContent = 'Glissez-déposez vos fichiers ou cliquez pour sélectionner';
+                defaultFileIcon.style.color = '#9ca3af';
+            }
+        }
+
+        function updateFilePreview() {
+            filePreview.innerHTML = '';
+            
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-preview-item';
+                
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                const fileIcon = getFileIconSVG(fileExtension);
+                
+                fileItem.innerHTML = `
+                    ${fileIcon}
+                    <div class="file-preview-name">${file.name}</div>
+                    <div class="file-preview-size">${formatFileSize(file.size)}</div>
+                    <div class="remove-file" onclick="removeFileFromPreview(${index}, '${uploadAreaId}', '${fileInputId}', '${previewId}', '${countId}', '${labelTextId}', '${fileIconId}')">×</div>
+                `;
+                
+                filePreview.appendChild(fileItem);
+            });
+        }
+
+        function updateFilesCount() {
+            if (selectedFiles.length === 0) {
+                filesCount.textContent = 'Aucun fichier sélectionné';
+            } else {
+                filesCount.textContent = `${selectedFiles.length} fichier(s) sélectionné(s) - ${formatTotalSize(selectedFiles)}`;
+            }
+        }
+
+        function formatTotalSize(files) {
+            const totalSize = files.reduce((total, file) => total + file.size, 0);
+            return formatFileSize(totalSize);
+        }
+    }
+
+    // Fonction pour supprimer un fichier de la prévisualisation
+    function removeFileFromPreview(index, uploadAreaId, fileInputId, previewId, countId, labelTextId, fileIconId) {
+        const fileUploadArea = document.getElementById(uploadAreaId);
+        const fileInput = document.getElementById(fileInputId);
+        const fileLabelText = document.getElementById(labelTextId);
+        const defaultFileIcon = document.getElementById(fileIconId);
+        
+        // Créer un nouveau FileList sans le fichier supprimé
+        const dt = new DataTransfer();
+        const files = Array.from(fileInput.files);
+        
+        files.forEach((file, i) => {
+            if (i !== index) {
+                dt.items.add(file);
+            }
+        });
+        
+        fileInput.files = dt.files;
+        
+        // Réinitialiser l'interface
+        initializeFileUpload(uploadAreaId, fileInputId, previewId, countId, 'uploadStatusExisting', labelTextId, fileIconId);
+        
+        if (dt.files.length === 0) {
             fileUploadArea.classList.remove('has-files');
             fileLabelText.textContent = 'Glissez-déposez vos fichiers ou cliquez pour sélectionner';
             defaultFileIcon.style.color = '#9ca3af';
         }
     }
 
-    function updateFilePreview() {
-        filePreview.innerHTML = '';
+    // Fonction utilitaire pour les icônes de fichiers
+    function getFileIconSVG(extension) {
+        const icons = {
+            pdf: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg>',
+            doc: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
+            docx: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
+            xls: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
+            xlsx: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
+            jpg: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
+            jpeg: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
+            png: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>'
+        };
         
-        selectedFiles.forEach((file, index) => {
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-preview-item';
-            
-            const fileExtension = file.name.split('.').pop().toLowerCase();
-            const fileIcon = getFileIconSVG(fileExtension);
-            
-            fileItem.innerHTML = `
-                ${fileIcon}
-                <div class="file-preview-name">${file.name}</div>
-                <div class="file-preview-size">${formatFileSize(file.size)}</div>
-                <div class="remove-file" onclick="removeFileFromPreview(${index}, '${uploadAreaId}', '${fileInputId}', '${previewId}', '${countId}', '${labelTextId}', '${fileIconId}')">×</div>
-            `;
-            
-            filePreview.appendChild(fileItem);
-        });
+        return icons[extension] || '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>';
     }
 
-    function updateFilesCount() {
-        if (selectedFiles.length === 0) {
-            filesCount.textContent = 'Aucun fichier sélectionné';
-        } else {
-            filesCount.textContent = `${selectedFiles.length} fichier(s) sélectionné(s) - ${formatTotalSize(selectedFiles)}`;
-        }
+    function formatFileSize(bytes) {
+        if (bytes === 0 || bytes === undefined) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
-
-    function formatTotalSize(files) {
-        const totalSize = files.reduce((total, file) => total + file.size, 0);
-        return formatFileSize(totalSize);
-    }
-}
-
-// Fonction pour supprimer un fichier de la prévisualisation
-function removeFileFromPreview(index, uploadAreaId, fileInputId, previewId, countId, labelTextId, fileIconId) {
-    const fileUploadArea = document.getElementById(uploadAreaId);
-    const fileInput = document.getElementById(fileInputId);
-    const fileLabelText = document.getElementById(labelTextId);
-    const defaultFileIcon = document.getElementById(fileIconId);
-    
-    // Créer un nouveau FileList sans le fichier supprimé
-    const dt = new DataTransfer();
-    const files = Array.from(fileInput.files);
-    
-    files.forEach((file, i) => {
-        if (i !== index) {
-            dt.items.add(file);
-        }
-    });
-    
-    fileInput.files = dt.files;
-    
-    // Réinitialiser l'interface
-    initializeFileUpload(uploadAreaId, fileInputId, previewId, countId, 'uploadStatusExisting', labelTextId, fileIconId);
-    
-    if (dt.files.length === 0) {
-        fileUploadArea.classList.remove('has-files');
-        fileLabelText.textContent = 'Glissez-déposez vos fichiers ou cliquez pour sélectionner';
-        defaultFileIcon.style.color = '#9ca3af';
-    }
-}
-
-// Fonction utilitaire pour les icônes de fichiers
-function getFileIconSVG(extension) {
-    const icons = {
-        pdf: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg>',
-        doc: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
-        docx: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
-        xls: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
-        xlsx: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
-        jpg: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
-        jpeg: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>',
-        png: '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>'
-    };
-    
-    return icons[extension] || '<svg class="file-preview-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>';
-}
-
-function formatFileSize(bytes) {
-    if (bytes === 0 || bytes === undefined) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
 </script>
 
 

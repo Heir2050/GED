@@ -128,6 +128,15 @@ class Document
             }
         }
 
+        // Après la récupération des documents
+        if (!empty($_GET['search'])) {
+            $searchTerm = $_GET['search'];
+            $data['documents'] = array_filter($data['documents'], function($doc) use ($searchTerm) {
+                return stripos($doc->nom, $searchTerm) !== false || 
+                    stripos($doc->nom_stockage, $searchTerm) !== false;
+            });
+        }
+
         // Création d'un document
         if ($req->posted() && $ses->is_logged_in()) {
             // Upload du fichier
@@ -383,19 +392,19 @@ class Document
                 
                 $result = $dossier->mettreAJourEtat($dossier_id, $employe_id, 'CLOTURE');
 
-                if ($result) {
+                // if ($result) {
                     // ENREGISTRER L'ACTION DE CLÔTURE
                     $dossier_data = $dossier->first(['id' => $dossier_id]);
-                    if ($dossier_data) {
+                    // if ($dossier_data) {
                         $this->enregistrerAction(
                             'CLOTURE_DOSSIER',
                             "Clôture du dossier \"{$dossier_data->nom}\"",
                             null,
                             $dossier_id
                         );
-                    }
+                    // }
                     // message("Dossier marqué comme clôturé");
-                }
+                // }
 
                 error_log("Résultat mise à jour: " . ($result ? 'SUCCÈS' : 'ÉCHEC'));
                 
@@ -419,7 +428,7 @@ class Document
             message("Erreur de session", 'error');
         }
         
-        redirect('document/etats_utilisateurs/' . $dossier_id);
+        redirect('document/?dossier_id=' . $dossier_id);
     }
 
     public function archiver_dossier($dossier_id = null)

@@ -121,22 +121,22 @@ use Core\Session;
                     <select name="role_dest" class="w-full border border-gray-300 rounded-lg px-4 py-2.5">
                         <option value="">Sélectionnez un rôle</option>
                         <?php 
-                        $role_utilisateur = $ses->user('role_service') ?? null;
-                        $service_id = $_POST['service_dest'] ?? null;
-                        
-                        foreach ($roles as $role): 
-                            // Vérifier si le rôle doit être exclu
-                            $deja_envoye = false;
+                            $role_utilisateur = $ses->user('role_service') ?? null;
+                            $service_id = $_POST['service_dest'] ?? null;
                             
-                            // Si l'utilisateur a un rôle_service, on exclut ce rôle de la liste
-                            if ($role_utilisateur && $role === $role_utilisateur) {
-                                $deja_envoye = true;
-                            }
-                            
-                            // Vérification supplémentaire basée sur le service
-                            if (!$deja_envoye && $service_id && isset($roles_exclus[$service_id])) {
-                                $deja_envoye = in_array($role, $roles_exclus[$service_id]);
-                            }
+                            foreach ($roles as $role): 
+                                // Vérifier si le rôle doit être exclu
+                                $deja_envoye = false;
+                                
+                                // Si l'utilisateur a un rôle_service, on exclut ce rôle de la liste
+                                if ($role_utilisateur && $role === $role_utilisateur) {
+                                    $deja_envoye = true;
+                                }
+                                
+                                // Vérification supplémentaire basée sur le service
+                                if (!$deja_envoye && $service_id && isset($roles_exclus[$service_id])) {
+                                    $deja_envoye = in_array($role, $roles_exclus[$service_id]);
+                                }
                         ?>
                             <?php if (!$deja_envoye): ?>
                                 <option value="<?= $role ?>"><?= esc($role) ?></option>

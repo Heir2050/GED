@@ -54,12 +54,13 @@ class Users
         $action = $data['action'] = URL(2) ?? 'View';
 
         # After doing anything, we unsure that the user is loged in.
-        // if (!$ses->is_logged_in() || $ses->user('role') != 'admin') {
-        //     message('Accés non autorisé');
-        //     redirect('home');
-        // }
+        if (!$ses->is_logged_in() || $ses->user('role') != 'ADMIN') {
+            message('Accés non autorisé');
+            redirect('login');
+        }
 
-        // $users->setOrder_column('user_id');
+        // Récupérer les valeurs disponibles pour role_service
+        $rolesService = $users->getRoleServiceValues();
 
         if ($action == 'add') {
             $services = new Services();
@@ -185,6 +186,9 @@ class Users
         $data['rows'] = $users->findAll();
 
         $data['services'] = $services->findAll();
+
+        // Récupérer les valeurs disponibles pour role_service
+        $data ['rolesService' ] = $rolesService;
 
         $this->view('users', $data);
     }

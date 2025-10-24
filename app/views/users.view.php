@@ -94,12 +94,14 @@
                             <div class="w-full md:w-1/2 ">
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Fonction</label>
                                 <div x-data="{ isOptionSelected: false }" class="relative z-20 bg-transparent">
-                                    <select name="role"
-                                        class="dark:bg-dark-900 z-20 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-                                        :class="isOptionSelected && 'text-gray-500 dark:text-gray-400'"
-                                        @change="isOptionSelected = true">
-                                        <option value="USER" <?= old_select('role', 'USER') ?>>User</option>
-                                        <option value="ADMIN" <?= old_select('role', 'ADMIN') ?>>Admin</option>
+                                    <select name="role_service" class="dark:bg-dark-900 z-20 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" @change="isOptionSelected = true">
+                                        <?php if (!empty($rolesService)): ?>
+                                            <?php foreach ($rolesService as $role): ?>
+                                                <option value="<?= $role ?>" <?= old_select('role_service', $role) ?>>
+                                                    <?= $roleLabels[$role] ?? $role ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
                                     </select>
                                     <span class="absolute z-30 text-gray-500 -translate-y-1/2 right-4 top-1/2 dark:text-gray-400">
                                         <svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -121,8 +123,7 @@
                             </div>
                         </div>
                         <div class="flex items-center justify-end w-full gap-3 mt-6">
-                            <a href="<?= ROOT ?>/users"
-                                class="flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs transition-colors hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 sm:w-auto">
+                            <a href="<?= ROOT ?>/users" class="flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs transition-colors hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 sm:w-auto">
                                 Annuler
                             </a>
                             <button type="submit"
@@ -279,6 +280,22 @@
         </div>
     </main>
 <?php else : ?>
+    <?php if (!empty(message())) : ?>
+        <div class="rounded-xl border border-success-500 mt-6 bg-success-50 p-4 dark:border-success-500/30 dark:bg-success-500/15" style="margin-top: 20px; position:absolute; left:50%; transform: translate(-50%, 0);">
+            <div class="flex items-start gap-3">
+                <div class="-mt-0.5 text-success-500">
+                    <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M3.70186 12.0001C3.70186 7.41711 7.41711 3.70186 12.0001 3.70186C16.5831 3.70186 20.2984 7.41711 20.2984 12.0001C20.2984 16.5831 16.5831 20.2984 12.0001 20.2984C7.41711 20.2984 3.70186 16.5831 3.70186 12.0001ZM12.0001 1.90186C6.423 1.90186 1.90186 6.423 1.90186 12.0001C1.90186 17.5772 6.423 22.0984 12.0001 22.0984C17.5772 22.0984 22.0984 17.5772 22.0984 12.0001C22.0984 6.423 17.5772 1.90186 12.0001 1.90186ZM15.6197 10.7395C15.9712 10.388 15.9712 9.81819 15.6197 9.46672C15.2683 9.11525 14.6984 9.11525 14.347 9.46672L11.1894 12.6243L9.6533 11.0883C9.30183 10.7368 8.73198 10.7368 8.38051 11.0883C8.02904 11.4397 8.02904 12.0096 8.38051 12.3611L10.553 14.5335C10.7217 14.7023 10.9507 14.7971 11.1894 14.7971C11.428 14.7971 11.657 14.7023 11.8257 14.5335L15.6197 10.7395Z" fill=""></path>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        <?= message('', true) ?>
+                    </p>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
     <main>
         <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
             <!-- Breadcrumb Start -->

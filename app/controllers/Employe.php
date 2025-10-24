@@ -49,12 +49,13 @@ class Employe
         $action = $data['action'] = URL(2) ?? 'View';
 
         # After doing anything, we unsure that the user is loged in.
-        // if (!$ses->is_logged_in() || $ses->user('role') != 'admin') {
-        //     message('Accés non autorisé');
-        //     redirect('home');
-        // }
+        if (!$ses->is_logged_in() || $ses->user('role') != 'ADMIN') {
+            message('Accés non autorisé');
+            redirect('home');
+        }
 
-        // $employes->setOrder_column('user_id');
+
+        
 
         if ($action == 'add') {
             if ($req->posted()) { # if ($_SERVER['REQUEST_METHOD'] = 'POST') the same

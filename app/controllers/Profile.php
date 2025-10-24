@@ -24,7 +24,7 @@ class Profile
         $data = [];
 
         if (!$ses->is_logged_in()) {
-            message('Please login');
+            // message('Please login');
             redirect('login');
         }
 
